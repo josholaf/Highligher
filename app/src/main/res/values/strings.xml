@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Highligher</string>
+    <string name="capture_label">Highlight</string>
+</resources>
