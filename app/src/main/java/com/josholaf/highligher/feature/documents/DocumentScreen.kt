@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -21,14 +21,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -48,6 +46,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.josholaf.highligher.core.markdown.MarkdownEditor
+import com.josholaf.highligher.core.markdown.MarkdownPreview
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.domain.model.Document
 import com.josholaf.highligher.domain.model.Highlight
@@ -63,13 +62,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-enum class DocumentTab { Editor, Highlights }
-
 data class DocumentUiState(
     val document: Document? = null,
     val highlights: List<Highlight> = emptyList(),
     val rawText: String = "",
-    val tab: DocumentTab = DocumentTab.Editor,
     val loading: Boolean = true,
     val saving: Boolean = false,
     val dirty: Boolean = false
@@ -102,8 +98,6 @@ class DocumentViewModel @Inject constructor(
             }
         }
     }
-
-    fun setTab(tab: DocumentTab) { _ui.update { it.copy(tab = tab) } }
 
     fun updateRaw(text: String) {
         _ui.update { it.copy(rawText = text, dirty = true, saving = true) }
@@ -158,7 +152,7 @@ fun DocumentScreen(
                         Text(state.document?.title ?: "Note", style = MaterialTheme.typography.titleMedium, maxLines = 1)
                         Text(
                             when {
-                                state.dirty || state.saving -> "Saving…"
+                                state.dirty || state.saving -> "Saving\u2026"
                                 !state.loading -> "Saved"
                                 else -> ""
                             },
@@ -189,47 +183,35 @@ fun DocumentScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        Column(Modifier = Modifier.fillMaxSize().padding(padding)) {
+            MarkdownEditor(
+                value = state.rawText,
+                onValueChange = viewModel::updateRaw,
+                modifier = Modifier.weight(1f),
+                placeholder = "Write in Markdown\u2026",
+                fillMaxHeight = true
+            )
+            HorizontalDivider()
+            Column(
+                Modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                SegmentedButton(
-                    selected = state.tab == DocumentTab.Editor,
-                    onClick = { viewModel.setTab(DocumentTab.Editor) },
-                    shape = SegmentedButtonDefaults.itemShape(0, 2)
-                ) { Text("Editor") }
-                SegmentedButton(
-                    selected = state.tab == DocumentTab.Highlights,
-                    onClick = { viewModel.setTab(DocumentTab.Highlights) },
-                    shape = SegmentedButtonDefaults.itemShape(1, 2)
-                ) { Text("Highlights (${state.highlights.size})") }
-            }
-            when (state.tab) {
-                DocumentTab.Editor -> MarkdownEditor(
-                    value = state.rawText,
-                    onValueChange = viewModel::updateRaw,
-                    modifier = Modifier.fillMaxSize(),
-                    placeholder = "Write in Markdown…",
-                    fillMaxHeight = true
-                )
-                DocumentTab.Highlights -> LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    if (!state.loading && state.highlights.isEmpty()) {
-                        item {
-                            Text(
-                                "No captured highlights yet.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    items(state.highlights, key = { it.id }) { h ->
-                        HighlightCard(h, onEdit = { editing = h }, onDelete = { viewModel.deleteHighlight(h.id) })
-                    }
-                    item { Spacer(Modifier.height(24.dp)) }
+                Text("Live preview", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                MarkdownPreview(markdown = state.rawText)
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider()
+                Text("Highlights (" + state.highlights.size + ")", style = MaterialTheme.typography.titleMedium)
+                if (!state.loading && state.highlights.isEmpty()) {
+                    Text(
+                        "No captured highlights yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
+                state.highlights.forEach { h ->
+                    HighlightCard(h, onEdit = { editing = h }, onDelete = { viewModel.deleteHighlight(h.id) })
+                }
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -296,7 +278,7 @@ private fun HighlightCard(highlight: Highlight, onEdit: () -> Unit, onDelete: ()
             Text(highlight.selectedText, style = MaterialTheme.typography.bodyLarge.copy(fontStyle = FontStyle.Italic))
             Spacer(Modifier.height(8.dp))
             highlight.sourceUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
-            Text("Captured ${dateFmt.format(highlight.createdAt)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Captured " + dateFmt.format(highlight.createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             highlight.note?.let { Spacer(Modifier.height(6.dp)); Text(it, style = MaterialTheme.typography.bodyMedium) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Edit") }

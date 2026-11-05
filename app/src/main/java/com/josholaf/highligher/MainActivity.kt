@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -30,7 +29,6 @@ import com.josholaf.highligher.core.design.HighligherTheme
 import com.josholaf.highligher.core.design.ThemeViewModel
 import com.josholaf.highligher.feature.home.HomeScreen
 import com.josholaf.highligher.feature.library.LibraryScreen
-import com.josholaf.highligher.feature.search.SearchScreen
 import com.josholaf.highligher.feature.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -52,11 +50,10 @@ class MainActivity : ComponentActivity() {
 private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
     data object Home : Dest("home", "Home", Icons.Default.Home)
     data object Library : Dest("library", "Library", Icons.Default.LibraryBooks)
-    data object Search : Dest("search", "Search", Icons.Default.Search)
     data object Settings : Dest("settings", "Settings", Icons.Default.Settings)
 }
 
-private val destinations = listOf(Dest.Home, Dest.Library, Dest.Search, Dest.Settings)
+private val destinations = listOf(Dest.Home, Dest.Library, Dest.Settings)
 
 @Composable
 fun HighligherAppRoot() {
@@ -93,7 +90,6 @@ fun HighligherAppRoot() {
         ) {
             composable(Dest.Home.route) { HomeScreen() }
             composable(Dest.Library.route) { LibraryScreen() }
-            composable(Dest.Search.route) { SearchScreen() }
             composable(Dest.Settings.route) { SettingsScreen() }
         }
     }
