@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Highligher</string>
-    <string name="capture_label">Highlight</string>
+    <string name="capture_title">Capture highlight</string>
+    <string name="save">Save</string>
+    <string name="note_hint">Add a personal note…</string>
+    <string name="folder">Folder</string>
+    <string name="document">Document</string>
+    <string name="new_document">New document</string>
+    <string name="source_optional">Source (optional)</string>
+    <string name="home">Home</string>
+    <string name="library">Library</string>
+    <string name="search">Search</string>
+    <string name="settings">Settings</string>
 </resources>

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#17231D</color>
-    <color name="ic_launcher_background">#17231D</color>
+    <color name="deep_forest">#FF17231D</color>
+    <color name="highlight_green">#FF78B68A</color>
+    <color name="paper">#FFF3F1E9</color>
+    <color name="warm_accent">#FFC6A66A</color>
+    <color name="on_paper">#FF1A1A1A</color>
+    <color name="muted">#FF6B6B6B</color>
 </resources>
