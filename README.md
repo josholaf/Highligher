@@ -4,7 +4,7 @@ Android app for capturing selected text into local Markdown documents.
 
 Select text in Chrome (or any app that exposes the system selection menu), send it to Highligher, optionally add a note, and append it to a Markdown file in a folder you choose. No account. No network required for core use.
 
-**Status:** early scaffold. Capture, folders/documents, Markdown append, basic library UI, search shell, and theme preference work. Export/backup, highlight edit/delete polish, and accessibility are not done yet.
+**Status:** MVP feature set from the product spec is implemented in source. Open in Android Studio, sync Gradle, run on API 26+. Export/backup via share intents works; automated cloud backup does not exist (by design).
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Select text in Chrome (or any app that exposes the system selection menu), send 
 | Target / compile SDK | 35 |
 | Language | Kotlin |
 | UI | Jetpack Compose, Material 3 |
-| Build | Android Studio (Ladybug / recent AGP) or Gradle |
+| Build | Android Studio (recent AGP) or Gradle |
 
 ## Build
 
@@ -23,9 +23,9 @@ git clone https://github.com/josholaf/Highligher.git
 cd Highligher
 ```
 
-Open the project root in Android Studio, let Gradle sync, then run the `app` configuration on a device or emulator (API 26+).
+Open the project root in Android Studio, let Gradle sync, run the `app` configuration.
 
-There is no Gradle Wrapper committed yet; Android Studio will offer to generate one on first open. If you prefer the command line after that:
+No Gradle Wrapper is committed yet; Studio can generate one on first open.
 
 ```bash
 ./gradlew :app:assembleDebug
@@ -33,26 +33,27 @@ There is no Gradle Wrapper committed yet; Android Studio will offer to generate 
 
 ## Capture flow
 
-1. Install and open Highligher once so the `PROCESS_TEXT` activity is registered.
-2. In another app (e.g. Chrome), long-press and select text.
-3. Tap **Highligher** in the selection toolbar.
-4. Add an optional note and source URL, pick or create a folder and document, save.
+1. Install and open Highligher once so `PROCESS_TEXT` is registered.
+2. In another app, select text.
+3. Choose **Highligher** from the selection toolbar.
+4. Optional note and source URL, pick or create folder/document, save.
 
-Selected text is required. Source URL is optional; Android does not always pass it through `ACTION_PROCESS_TEXT`.
+Last-used folder and document are remembered. First launch creates an **Inbox / Quick captures** document if the library is empty.
 
-## What is implemented
+## Implemented
 
-- Text selection capture via `android.intent.action.PROCESS_TEXT`
-- Folders and Markdown documents under app-private storage
-- Append highlights into `.md` files with stable HTML comment IDs
-- Room index for folders, documents, and highlights (search metadata)
-- Markdown editor toolbar: undo/redo, bold, italic, underline, lists, indent
-- Home, Library, Search, Settings screens
+- Capture via `ACTION_PROCESS_TEXT`
+- Folders and Markdown documents (create, rename document, delete folder/document)
+- Append / edit / delete individual highlights (Markdown + Room index)
+- Move highlight between documents (repository API)
+- Document screen: highlight cards, edit dialog, delete, raw Markdown editor toggle, share/export
+- Search across text, notes, and sources; open matching document
+- Home stats and recent documents
 - Theme: system / light / dark (DataStore)
+- Settings: storage size, export all Markdown via share sheet
+- Offline-only core path
 
-## Storage layout
-
-Files live under the app’s internal storage (removed on uninstall):
+## Storage
 
 ```
 files/highlight/library/
@@ -60,11 +61,9 @@ files/highlight/library/
     <DocumentTitle>.md
 ```
 
-Room database: `highligher.db` (metadata and search index only).
+Room DB: `highligher.db` (metadata + search). Uninstall removes both.
 
-**Uninstall deletes everything.** Export or copy files out before removing the app. Automatic backup is not implemented.
-
-## Markdown document shape
+## Markdown shape
 
 ```markdown
 ---
@@ -80,68 +79,41 @@ updated: 2026-11-04
 
 <!-- highlight:<highlight-uuid> -->
 
-### Architecture principles
+### Short heading from quote
 
-> Quoted passage from the source.
+> Quoted passage.
 
 **Source:** [https://example.com](https://example.com)
 
 **Captured:** 2026-11-04
 
-**My note:** Optional personal note.
+**My note:** Optional note.
 
 ---
 ```
 
-Highlight blocks are identified by `<!-- highlight:<id> -->` so the app can edit or delete one block without rewriting the whole file blindly.
-
 ## Stack
 
-| Concern | Library / approach |
-|---------|-------------------|
-| UI | Compose, Material 3, Navigation Compose |
+| Concern | Choice |
+|---------|--------|
+| UI | Compose, Material 3, Navigation |
 | DI | Hilt |
-| Metadata DB | Room |
-| Settings | DataStore Preferences |
-| Markdown files | Kotlin `File` API + custom append/delete |
-| Markdown parse (dependency present) | CommonMark |
-| Architecture | Feature packages + domain models + repository |
+| Metadata | Room |
+| Settings / last destination | DataStore |
+| Files | Kotlin File API + atomic temp rename |
+| Markdown dependency | CommonMark (on classpath) |
 
-Package root: `com.josholaf.highligher`.
+Package: `com.josholaf.highligher`.
 
-## Project layout
+## Still open / your pass
 
-```
-app/src/main/java/com/josholaf/highligher/
-  core/          database, datastore, design, di, markdown
-  data/          repository
-  domain/        models
-  feature/       capture, documents, home, library, search, settings
-  MainActivity.kt
-  HighligherApp.kt
-```
-
-## Design tokens
-
-| Name | Hex |
-|------|-----|
-| Deep forest | `#17231D` |
-| Highlight green | `#78B68A` |
-| Paper | `#F3F1E9` |
-| Warm accent | `#C6A66A` |
-
-## Known gaps
-
-- No Gradle Wrapper in the repo yet
-- No automated tests
-- No export / share / backup UI
-- Highlight edit and delete from the document view are incomplete relative to the PRD
-- Launcher adaptive icon is minimal; no Play Store assets
-- Search UI exists; ranking and navigation into a specific highlight need more work
-
-## Contributing
-
-Issues and PRs are welcome. Prefer small, focused changes. For capture or Markdown write-path changes, say how you tested (device/API level, source app for selection).
+- Gradle Wrapper + CI
+- Automated tests
+- SAF folder backup / restore
+- Move-highlight UI (API exists)
+- Tags
+- Accessibility pass and screen-reader labels audit
+- Play / F-Droid packaging
 
 ## License
 
