@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Folder
@@ -24,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -38,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.josholaf.highligher.domain.model.Document
 import com.josholaf.highligher.domain.model.Folder
 
-/** Shows highlighted text and save path: Folder → Note (existing or new). */
+/** Shows highlighted text (with copy) and save path: Folder → Note. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HighlightSaveWidget(
@@ -63,6 +67,8 @@ fun HighlightSaveWidget(
     val selectedFolder = folders.firstOrNull { it.id == selectedFolderId }
     val folderDocs = documents.filter { it.folderId == selectedFolderId }
     val selectedDoc = folderDocs.firstOrNull { it.id == selectedDocumentId }
+    val clipboard = LocalClipboardManager.current
+    var copied by remember { mutableStateOf(false) }
 
     var folderExpanded by remember { mutableStateOf(false) }
     var noteExpanded by remember { mutableStateOf(false) }
@@ -70,11 +76,37 @@ fun HighlightSaveWidget(
     var showNewNote by remember { mutableStateOf(false) }
     var nameDraft by remember { mutableStateOf("") }
 
+    fun copyText() {
+        if (highlightedText.isNotBlank()) {
+            clipboard.setText(AnnotatedString(highlightedText))
+            copied = true
+        }
+    }
+
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Highlighted text", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Highlighted text",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = ::copyText, enabled = highlightedText.isNotBlank()) {
+                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(if (copied) "Copied" else "Copy")
+            }
+        }
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
-                Spacer(Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
+                Spacer(
+                    Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
                 Spacer(Modifier.width(12.dp))
                 Text(
                     highlightedText.ifBlank { "(no text)" },
@@ -83,6 +115,9 @@ fun HighlightSaveWidget(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = ::copyText, enabled = highlightedText.isNotBlank()) {
+                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy highlighted text")
+                }
             }
         }
 
@@ -90,17 +125,35 @@ fun HighlightSaveWidget(
         Surface(
             shape = RoundedCornerShape(14.dp),
             tonalElevation = 1.dp,
-            modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+            modifier = Modifier.fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                ) {
                     Icon(Icons.Default.Folder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(selectedFolder?.name ?: "Folder", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        selectedFolder?.name ?: "Folder",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Icon(Icons.Default.Description, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(selectedDoc?.title ?: "Note", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        selectedDoc?.title ?: "Note",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Text("Folder", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -168,7 +221,10 @@ fun HighlightSaveWidget(
                     }
                 }
 
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     TextButton(onClick = { nameDraft = ""; showNewFolder = true }) {
                         Icon(Icons.Default.CreateNewFolder, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
@@ -211,7 +267,13 @@ private fun NameDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(value = value, onValueChange = onValueChange, label = { Text(label) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text(label) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text("Create") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
