@@ -1,5 +1,6 @@
 package com.josholaf.highligher.feature.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +29,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.domain.model.Document
+import com.josholaf.highligher.feature.documents.DocumentScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +70,15 @@ class HomeViewModel @Inject constructor(
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    var openDocumentId by remember { mutableStateOf<String?>(null) }
+
+    if (openDocumentId != null) {
+        DocumentScreen(
+            documentId = openDocumentId!!,
+            onBack = { openDocumentId = null }
+        )
+        return
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -76,7 +90,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Spacer(Modifier.height(12.dp))
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard("Highlights", state.highlightCount.toString(), Modifier.weight(1f))
                 StatCard("Documents", state.documentCount.toString(), Modifier.weight(1f))
                 StatCard("Folders", state.folderCount.toString(), Modifier.weight(1f))
@@ -92,7 +106,11 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             }
         } else {
             items(state.recentDocuments, key = { it.id }) { doc ->
-                Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxWidth().clickable { openDocumentId = doc.id }
+                ) {
                     Column(Modifier = Modifier.padding(14.dp)) {
                         Text(doc.title, style = MaterialTheme.typography.titleSmall)
                         Text(doc.filePath.substringAfterLast('/'), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -105,8 +123,12 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier = Modifier.padding(14.dp)) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
             Text(value, style = MaterialTheme.typography.headlineSmall)
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
