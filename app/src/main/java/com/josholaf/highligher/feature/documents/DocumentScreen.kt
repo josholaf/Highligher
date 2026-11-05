@@ -189,7 +189,7 @@ fun DocumentScreen(
             )
         }
     ) { padding ->
-        Column(Modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {

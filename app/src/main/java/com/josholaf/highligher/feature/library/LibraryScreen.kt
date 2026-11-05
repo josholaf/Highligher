@@ -217,7 +217,7 @@ private fun FolderSection(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.padding(8.dp))
-                    Column(Modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(doc.title, style = MaterialTheme.typography.bodyLarge)
                         if (isFolderNote) {
                             Text("Folder context", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
