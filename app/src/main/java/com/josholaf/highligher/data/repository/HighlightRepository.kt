@@ -200,6 +200,22 @@ class HighlightRepository @Inject constructor(
         db.documentDao().update(targetDoc.copy(updatedAt = now))
     }
 
+    suspend fun getOrCreateFolderNote(folderId: String): Document {
+        val existing = db.documentDao().getByFolder(folderId)
+            .firstOrNull { it.title.equals("Folder note", ignoreCase = true) }
+        if (existing != null) return existing.toDomain()
+        return createDocument("Folder note", folderId)
+    }
+
+    suspend fun createBlankNote(title: String, folderId: String): Document {
+        val doc = createDocument(title.ifBlank { "Untitled" }, folderId)
+        val file = File(doc.filePath)
+        if (file.exists()) {
+            file.writeText(file.readText().trimEnd() + "\n\n")
+        }
+        return doc
+    }
+
     suspend fun ensureDefaultLibrary() {
         if (db.folderDao().getAllOnce().isEmpty()) {
             val folder = createFolder("Inbox")
