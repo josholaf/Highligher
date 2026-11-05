@@ -43,7 +43,7 @@ jobs:
         with:
           draft: true
           prerelease: true
-          tag_name: v0.1.0
-          name: "Highligher v0.1.0 (draft)"
-          body: "Automatic draft debug build from main. Not signed for distribution."
+          tag_name: v0.2.0
+          name: "Highligher v0.2.0 (draft)"
+          body: "Automatic draft debug build from main. New in 0.2.0: capture save-path UI with copy button, home-screen widget showing last saved highlight. Not signed for distribution."
           files: app/build/outputs/apk/debug/app-debug.apk
