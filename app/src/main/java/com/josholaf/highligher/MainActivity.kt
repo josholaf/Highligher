@@ -3,58 +3,98 @@ package com.josholaf.highligher
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.josholaf.highligher.ui.theme.HighligherTheme
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.josholaf.highligher.core.design.HighligherTheme
+import com.josholaf.highligher.core.design.ThemeViewModel
+import com.josholaf.highligher.feature.home.HomeScreen
+import com.josholaf.highligher.feature.library.LibraryScreen
+import com.josholaf.highligher.feature.search.SearchScreen
+import com.josholaf.highligher.feature.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
-            HighligherTheme {
-                LibraryScreen(highlightCount = countHighlights())
+            val themeVm: ThemeViewModel = hiltViewModel()
+            val themeMode by themeVm.themeMode.collectAsState()
+            HighligherTheme(themeMode = themeMode) {
+                HighligherAppRoot()
             }
         }
     }
-
-    private fun countHighlights(): Int {
-        val dir = File(filesDir, "documents")
-        return dir.listFiles { f -> f.extension == "md" }?.size ?: 0
-    }
 }
 
+private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
+    data object Home : Dest("home", "Home", Icons.Default.Home)
+    data object Library : Dest("library", "Library", Icons.Default.LibraryBooks)
+    data object Search : Dest("search", "Search", Icons.Default.Search)
+    data object Settings : Dest("settings", "Settings", Icons.Default.Settings)
+}
+
+private val destinations = listOf(Dest.Home, Dest.Library, Dest.Search, Dest.Settings)
+
 @Composable
-fun LibraryScreen(highlightCount: Int) {
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+fun HighligherAppRoot() {
+    val navController = rememberNavController()
+    val backStack by navController.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                destinations.forEach { dest ->
+                    NavigationBarItem(
+                        selected = currentRoute == dest.route,
+                        onClick = {
+                            navController.navigate(dest.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(dest.icon, contentDescription = dest.label) },
+                        label = { Text(dest.label) }
+                    )
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = Dest.Home.route,
+            modifier = Modifier.padding(padding)
         ) {
-            Text(
-                text = "Highligher",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = if (highlightCount == 0)
-                    "No documents yet. Select text anywhere and tap Highlight."
-                else "$highlightCount document(s) captured",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            composable(Dest.Home.route) { HomeScreen() }
+            composable(Dest.Library.route) { LibraryScreen() }
+            composable(Dest.Search.route) { SearchScreen() }
+            composable(Dest.Settings.route) { SettingsScreen() }
         }
     }
 }
