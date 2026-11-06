@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
@@ -62,6 +64,7 @@ fun HighligherAppRoot() {
     val currentRoute = backStack?.destination?.route
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
             NavigationBar {
                 destinations.forEach { dest ->

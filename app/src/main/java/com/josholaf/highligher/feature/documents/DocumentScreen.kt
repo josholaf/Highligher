@@ -184,14 +184,6 @@ fun DocumentScreen(
         }
     ) { padding ->
         Column(Modifier = Modifier.fillMaxSize().padding(padding)) {
-            MarkdownEditor(
-                value = state.rawText,
-                onValueChange = viewModel::updateRaw,
-                modifier = Modifier.weight(1f),
-                placeholder = "Write in Markdown\u2026",
-                fillMaxHeight = true
-            )
-            HorizontalDivider()
             Column(
                 Modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -213,6 +205,14 @@ fun DocumentScreen(
                 }
                 Spacer(Modifier.height(24.dp))
             }
+            HorizontalDivider()
+            MarkdownEditor(
+                value = state.rawText,
+                onValueChange = viewModel::updateRaw,
+                modifier = Modifier.weight(1f),
+                placeholder = "Write in Markdown\u2026",
+                fillMaxHeight = true
+            )
         }
     }
 
