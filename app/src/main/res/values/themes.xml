@@ -5,7 +5,11 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Translucent so the browser underneath keeps its window alive:
+         opening the capture sheet never forces the page to reload. -->
     <style name="Theme.Highligher.Capture" parent="Theme.Highligher">
-        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources>
