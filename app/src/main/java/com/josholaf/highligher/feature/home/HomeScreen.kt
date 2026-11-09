@@ -130,7 +130,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         modifier = Modifier.fillMaxWidth().clickable { openDocumentId = result.highlight.documentId }
                     ) {
-                        Column(Modifier = Modifier.padding(14.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Text(
                                 listOfNotNull(result.folderName, result.documentTitle).joinToString(" · "),
                                 style = MaterialTheme.typography.labelMedium,
@@ -168,7 +168,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         modifier = Modifier.fillMaxWidth().clickable { openDocumentId = doc.id }
                     ) {
-                        Column(Modifier = Modifier.padding(14.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Text(doc.title, style = MaterialTheme.typography.titleSmall)
                             Text(doc.filePath.substringAfterLast('/'), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
