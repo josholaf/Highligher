@@ -27,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -112,8 +114,15 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 value = searchText,
                 onValueChange = { searchText = it; viewModel.setQuery(it) },
                 label = { Text("Search notes and highlights") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Search notes and highlights" },
                 singleLine = true
             )
         }
@@ -125,14 +134,20 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 }
             } else {
                 items(results, key = { it.highlight.id }) { result ->
+                    val pathLabel = listOfNotNull(result.folderName, result.documentTitle).joinToString(" · ")
                     Card(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth().clickable { openDocumentId = result.highlight.documentId }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .semantics {
+                                contentDescription = "Highlight in $pathLabel"
+                            }
+                            .clickable { openDocumentId = result.highlight.documentId }
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
-                                listOfNotNull(result.folderName, result.documentTitle).joinToString(" · "),
+                                pathLabel,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -166,7 +181,10 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     Card(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth().clickable { openDocumentId = doc.id }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Open document ${doc.title}" }
+                            .clickable { openDocumentId = doc.id }
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(doc.title, style = MaterialTheme.typography.titleSmall)
@@ -182,7 +200,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = "$label: $value" },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
