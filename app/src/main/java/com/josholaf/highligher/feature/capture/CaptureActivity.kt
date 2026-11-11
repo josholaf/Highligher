@@ -2,6 +2,7 @@ package com.josholaf.highligher.feature.capture
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -11,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.josholaf.highligher.R
 import com.josholaf.highligher.core.design.HighligherTheme
 import com.josholaf.highligher.core.design.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,7 +45,14 @@ class CaptureActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     CaptureScreen(
                         viewModel = viewModel,
-                        onSaved = { finish() },
+                        onSaved = {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.capture_saved_toast),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            finish()
+                        },
                         onCancel = { finish() }
                     )
                 }

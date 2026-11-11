@@ -16,4 +16,5 @@
     <string name="widget_title">Last capture</string>
     <string name="widget_empty_highlight">Select text in any app and send it to Highligher</string>
     <string name="widget_empty_path">Folder / Note</string>
+    <string name="capture_saved_toast">Highlight saved</string>
 </resources>
