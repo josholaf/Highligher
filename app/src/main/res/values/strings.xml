@@ -16,4 +16,31 @@
     <string name="widget_title">Last capture</string>
     <string name="widget_empty_highlight">Select text in any app and send it to Highligher</string>
     <string name="widget_empty_path">Folder / Note</string>
+
+    <!-- Home -->
+    <string name="home_tagline">Your local knowledge library</string>
+    <string name="search_notes_highlights">Search notes and highlights</string>
+    <string name="no_matches">No matches found.</string>
+    <string name="recent_documents">Recent documents</string>
+    <string name="no_documents_yet">No documents yet. Capture text from Chrome or any app via the selection menu.</string>
+    <string name="stat_highlights">Highlights</string>
+    <string name="stat_documents">Documents</string>
+    <string name="stat_folders">Folders</string>
+
+    <!-- Settings -->
+    <string name="appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="storage">Storage</string>
+    <string name="export_all_markdown">Export all Markdown</string>
+    <string name="export_chooser_title">Export Markdown</string>
+    <string name="export_subject">Highligher export</string>
+    <string name="offline_first_note">Highligher is offline-first. Core capture never needs the network.</string>
+
+    <!-- Capture -->
+    <string name="personal_note">Personal note</string>
+    <string name="save_highlight">Save highlight</string>
+    <string name="cancel">Cancel</string>
+    <string name="capture_saved_toast">Highlight saved</string>
 </resources>
