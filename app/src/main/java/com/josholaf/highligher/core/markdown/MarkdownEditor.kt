@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.FormatIndentDecrease
 import androidx.compose.material.icons.filled.FormatIndentIncrease
 import androidx.compose.material.icons.filled.FormatItalic
@@ -143,6 +144,7 @@ fun MarkdownEditor(
                 ToolbarIcon(Icons.Default.FormatBold, "Bold") { wrapSelection("**") }
                 ToolbarIcon(Icons.Default.FormatItalic, "Italic") { wrapSelection("*") }
                 ToolbarIcon(Icons.Default.FormatUnderlined, "Underline") { wrapSelection("<u>", "</u>") }
+                ToolbarIcon(Icons.Default.FormatColorFill, "Highlight") { wrapSelection("==") }
                 VerticalBar()
                 ToolbarIcon(Icons.AutoMirrored.Filled.FormatListBulleted, "Bullet") { insertLinePrefix("- ") }
                 ToolbarIcon(Icons.Default.FormatListNumbered, "Numbered") { insertLinePrefix("1. ") }
