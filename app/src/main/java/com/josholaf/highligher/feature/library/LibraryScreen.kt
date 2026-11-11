@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.StickyNote2
@@ -93,6 +94,7 @@ class LibraryViewModel @Inject constructor(
     fun deleteFolder(id: String) { viewModelScope.launch { repository.deleteFolder(id) } }
     fun deleteDocument(id: String) { viewModelScope.launch { repository.deleteDocument(id) } }
     fun renameDocument(id: String, title: String) { viewModelScope.launch { repository.renameDocument(id, title) } }
+    fun renameFolder(id: String, name: String) { viewModelScope.launch { repository.renameFolder(id, name) } }
 }
 
 @Composable
@@ -138,6 +140,7 @@ fun LibraryScreen(viewModel: LibraryViewModel = hiltViewModel()) {
                     onOpenDocument = { openDocumentId = it.id },
                     onNewNote = { title -> viewModel.createDocument(title, folder.id) { id -> openDocumentId = id } },
                     onFolderNote = { viewModel.openFolderNote(folder.id) { id -> openDocumentId = id } },
+                    onRenameFolder = { name -> viewModel.renameFolder(folder.id, name) },
                     onDeleteFolder = { viewModel.deleteFolder(folder.id) },
                     onDeleteDocument = viewModel::deleteDocument,
                     onRenameDocument = viewModel::renameDocument
@@ -161,6 +164,7 @@ private fun FolderSection(
     onOpenDocument: (Document) -> Unit,
     onNewNote: (String) -> Unit,
     onFolderNote: () -> Unit,
+    onRenameFolder: (String) -> Unit,
     onDeleteFolder: () -> Unit,
     onDeleteDocument: (String) -> Unit,
     onRenameDocument: (String, String) -> Unit
@@ -168,6 +172,7 @@ private fun FolderSection(
     var showNew by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     var renameDoc by remember { mutableStateOf<Document?>(null) }
+    var renameFolder by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(14.dp),
@@ -186,6 +191,11 @@ private fun FolderSection(
                     Icon(Icons.Default.MoreVert, contentDescription = "Folder menu")
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Rename folder") },
+                        onClick = { menuOpen = false; renameFolder = true },
+                        leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) }
+                    )
                     DropdownMenuItem(
                         text = { Text("Folder note") },
                         onClick = { menuOpen = false; onFolderNote() },
@@ -243,6 +253,12 @@ private fun FolderSection(
         NameDialog("New note", "Title", initial = "Untitled", onDismiss = { showNew = false }) {
             onNewNote(it)
             showNew = false
+        }
+    }
+    if (renameFolder) {
+        NameDialog("Rename folder", "Name", initial = folder.name, onDismiss = { renameFolder = false }) {
+            onRenameFolder(it)
+            renameFolder = false
         }
     }
     renameDoc?.let { doc ->
