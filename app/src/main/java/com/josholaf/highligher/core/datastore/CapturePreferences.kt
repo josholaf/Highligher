@@ -27,6 +27,7 @@ class CapturePreferences @Inject constructor(
 ) {
     private val folderKey = stringPreferencesKey("last_folder_id")
     private val documentKey = stringPreferencesKey("last_document_id")
+    private val recentSearchesKey = stringPreferencesKey("recent_searches")
 
     val lastDestination: Flow<LastDestination> = context.captureDataStore.data.map { prefs ->
         LastDestination(
@@ -35,10 +36,28 @@ class CapturePreferences @Inject constructor(
         )
     }
 
+    val recentSearches: Flow<List<String>> = context.captureDataStore.data.map { prefs ->
+        prefs[recentSearchesKey]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+    }
+
     suspend fun setLastDestination(folderId: String?, documentId: String?) {
         context.captureDataStore.edit { prefs ->
             if (folderId != null) prefs[folderKey] = folderId else prefs.remove(folderKey)
             if (documentId != null) prefs[documentKey] = documentId else prefs.remove(documentKey)
         }
+    }
+
+    suspend fun addRecentSearch(term: String) {
+        val trimmed = term.trim()
+        if (trimmed.isEmpty()) return
+        context.captureDataStore.edit { prefs ->
+            val existing = prefs[recentSearchesKey]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+            val updated = (listOf(trimmed) + existing.filterNot { it.equals(trimmed, ignoreCase = true) }).take(6)
+            prefs[recentSearchesKey] = updated.joinToString("\n")
+        }
+    }
+
+    suspend fun clearRecentSearches() {
+        context.captureDataStore.edit { prefs -> prefs.remove(recentSearchesKey) }
     }
 }

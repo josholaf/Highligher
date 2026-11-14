@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
@@ -27,16 +29,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.josholaf.highligher.core.datastore.CapturePreferences
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.data.repository.HighlightSearchResult
 import com.josholaf.highligher.domain.model.Document
@@ -61,9 +64,13 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: HighlightRepository
+    private val repository: HighlightRepository,
+    private val preferences: CapturePreferences
 ) : ViewModel() {
     private val query = MutableStateFlow("")
+
+    val recentSearches: StateFlow<List<String>> = preferences.recentSearches
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val state: StateFlow<HomeUiState> = combine(
         repository.observeHighlightCount(),
@@ -85,6 +92,15 @@ class HomeViewModel @Inject constructor(
 
     fun setQuery(q: String) { query.value = q.trim() }
 
+    fun recordSearch(term: String) {
+        if (term.isBlank()) return
+        viewModelScope.launch { preferences.addRecentSearch(term) }
+    }
+
+    fun clearRecentSearches() {
+        viewModelScope.launch { preferences.clearRecentSearches() }
+    }
+
     init {
         viewModelScope.launch { repository.ensureDefaultLibrary() }
     }
@@ -95,17 +111,9 @@ class HomeViewModel @Inject constructor(
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     val results by viewModel.results.collectAsState()
+    val recentSearches by viewModel.recentSearches.collectAsState()
     var searchText by remember { mutableStateOf("") }
     var openDocumentId by remember { mutableStateOf<String?>(null) }
-    val recentSearches = remember { mutableStateListOf<String>() }
-
-    fun rememberSearch(q: String) {
-        val trimmed = q.trim()
-        if (trimmed.isEmpty()) return
-        recentSearches.remove(trimmed)
-        recentSearches.add(0, trimmed)
-        while (recentSearches.size > 6) recentSearches.removeAt(recentSearches.lastIndex)
-    }
 
     if (openDocumentId != null) {
         DocumentScreen(
@@ -128,12 +136,13 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 onValueChange = {
                     searchText = it
                     viewModel.setQuery(it)
-                    if (it.trim().length >= 2) rememberSearch(it)
                 },
                 label = { Text("Search notes and highlights") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { viewModel.recordSearch(searchText) })
             )
         }
 
@@ -144,7 +153,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Recent searches", style = MaterialTheme.typography.titleSmall)
-                    TextButton(onClick = { recentSearches.clear() }) {
+                    TextButton(onClick = { viewModel.clearRecentSearches() }) {
                         Text("Clear")
                     }
                 }
@@ -172,7 +181,10 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     Card(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth().clickable { openDocumentId = result.highlight.documentId }
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            viewModel.recordSearch(searchText)
+                            openDocumentId = result.highlight.documentId
+                        }
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
