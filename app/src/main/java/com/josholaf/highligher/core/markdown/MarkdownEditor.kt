@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -15,18 +16,20 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatIndentDecrease
 import androidx.compose.material.icons.filled.FormatIndentIncrease
 import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,10 +37,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +53,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Continuous Markdown source editor. Toolbar sits under the body; parent imePadding keeps it above the keyboard. */
+/**
+ * Markdown source editor with an Obsidian-style live preview: syntax markers are
+ * hidden on every line except the one being edited, and the toolbar floats above
+ * the keyboard instead of pushing the body.
+ */
 @Composable
 fun MarkdownEditor(
     value: String,
@@ -65,6 +72,13 @@ fun MarkdownEditor(
 
     val undoStack = remember { mutableStateListOf<String>() }
     val redoStack = remember { mutableStateListOf<String>() }
+    var previewOnly by remember { mutableStateOf(false) }
+
+    val palette = livePreviewPalette()
+    val activeLine = lineRangeAt(fieldValue.text, fieldValue.selection.max)
+    val liveDocument = remember(fieldValue.text, activeLine, palette) {
+        buildLivePreview(fieldValue.text, activeLine, palette)
+    }
 
     fun pushUndo(before: String) {
         if (undoStack.lastOrNull() != before) {
@@ -113,79 +127,119 @@ fun MarkdownEditor(
         applyChange(newText, TextRange((cursor + delta).coerceAtLeast(lineStart)))
     }
 
-    Column(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (fillMaxHeight) Modifier.weight(1f) else Modifier)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            if (fieldValue.text.isEmpty()) {
-                Text(
-                    placeholder,
-                    style = TextStyle(
+    Box(
+        modifier = if (fillMaxHeight) modifier.fillMaxSize() else modifier.fillMaxWidth().heightIn(min = (minLines * 22).dp)
+    ) {
+        if (previewOnly) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 64.dp)
+            ) {
+                MarkdownPreview(fieldValue.text)
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 64.dp)
+            ) {
+                if (fieldValue.text.isEmpty()) {
+                    Text(
+                        placeholder,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+                        )
+                    )
+                }
+                BasicTextField(
+                    value = fieldValue,
+                    onValueChange = { next ->
+                        if (next.text != fieldValue.text) pushUndo(fieldValue.text)
+                        fieldValue = next
+                        onValueChange(next.text)
+                    },
+                    modifier = if (fillMaxHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(
                         fontFamily = FontFamily.Monospace,
                         fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-                    )
+                        lineHeight = 22.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    visualTransformation = liveDocument.transformation,
+                    minLines = if (fillMaxHeight) 1 else minLines
                 )
             }
-            BasicTextField(
-                value = fieldValue,
-                onValueChange = { next ->
-                    if (next.text != fieldValue.text) pushUndo(fieldValue.text)
-                    fieldValue = next
-                    onValueChange(next.text)
-                },
-                modifier = Modifier.fillMaxWidth().then(
-                    if (fillMaxHeight) Modifier.fillMaxSize().verticalScroll(rememberScrollState()) else Modifier
-                ),
-                textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                minLines = if (fillMaxHeight) 1 else minLines
-            )
         }
 
-        HorizontalDivider()
-        Surface(tonalElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ToolbarIcon(Icons.Default.Undo, "Undo", enabled = undoStack.isNotEmpty()) {
-                    val prev = undoStack.removeLastOrNull() ?: return@ToolbarIcon
-                    redoStack.add(fieldValue.text)
-                    fieldValue = TextFieldValue(prev, TextRange(prev.length))
-                    onValueChange(prev)
+        Surface(
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp,
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+        ) {
+            Column {
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ToolbarIcon(
+                        if (previewOnly) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        if (previewOnly) "Edit" else "Preview"
+                    ) { previewOnly = !previewOnly }
+                    VerticalBar()
+                    ToolbarIcon(Icons.Default.Undo, "Undo", enabled = !previewOnly && undoStack.isNotEmpty()) {
+                        val prev = undoStack.removeLastOrNull() ?: return@ToolbarIcon
+                        redoStack.add(fieldValue.text)
+                        fieldValue = TextFieldValue(prev, TextRange(prev.length))
+                        onValueChange(prev)
+                    }
+                    ToolbarIcon(Icons.Default.Redo, "Redo", enabled = !previewOnly && redoStack.isNotEmpty()) {
+                        val next = redoStack.removeLastOrNull() ?: return@ToolbarIcon
+                        undoStack.add(fieldValue.text)
+                        fieldValue = TextFieldValue(next, TextRange(next.length))
+                        onValueChange(next)
+                    }
+                    VerticalBar()
+                    ToolbarIcon(Icons.Default.Title, "Heading", enabled = !previewOnly) { insertLinePrefix("## ") }
+                    ToolbarIcon(Icons.Default.FormatBold, "Bold", enabled = !previewOnly) { wrapSelection("**") }
+                    ToolbarIcon(Icons.Default.FormatItalic, "Italic", enabled = !previewOnly) { wrapSelection("*") }
+                    ToolbarIcon(Icons.Default.FormatUnderlined, "Underline", enabled = !previewOnly) { wrapSelection("<u>", "</u>") }
+                    VerticalBar()
+                    ToolbarIcon(Icons.AutoMirrored.Filled.FormatListBulleted, "Bullet", enabled = !previewOnly) { insertLinePrefix("- ") }
+                    ToolbarIcon(Icons.Default.FormatListNumbered, "Numbered", enabled = !previewOnly) { insertLinePrefix("1. ") }
+                    ToolbarIcon(Icons.Default.FormatQuote, "Quote", enabled = !previewOnly) { insertLinePrefix("> ") }
+                    ToolbarIcon(Icons.Default.Code, "Code", enabled = !previewOnly) { wrapSelection("`") }
+                    ToolbarIcon(Icons.Default.Link, "Link", enabled = !previewOnly) { wrapSelection("[", "](url)") }
+                    VerticalBar()
+                    ToolbarIcon(Icons.Default.FormatIndentDecrease, "Outdent", enabled = !previewOnly) { indent(false) }
+                    ToolbarIcon(Icons.Default.FormatIndentIncrease, "Indent", enabled = !previewOnly) { indent(true) }
                 }
-                ToolbarIcon(Icons.Default.Redo, "Redo", enabled = redoStack.isNotEmpty()) {
-                    val next = redoStack.removeLastOrNull() ?: return@ToolbarIcon
-                    undoStack.add(fieldValue.text)
-                    fieldValue = TextFieldValue(next, TextRange(next.length))
-                    onValueChange(next)
-                }
-                VerticalBar()
-                ToolbarIcon(Icons.Default.Title, "Heading") { insertLinePrefix("## ") }
-                ToolbarIcon(Icons.Default.FormatBold, "Bold") { wrapSelection("**") }
-                ToolbarIcon(Icons.Default.FormatItalic, "Italic") { wrapSelection("*") }
-                ToolbarIcon(Icons.Default.FormatUnderlined, "Underline") { wrapSelection("<u>", "</u>") }
-                VerticalBar()
-                ToolbarIcon(Icons.AutoMirrored.Filled.FormatListBulleted, "Bullet") { insertLinePrefix("- ") }
-                ToolbarIcon(Icons.Default.FormatListNumbered, "Numbered") { insertLinePrefix("1. ") }
-                ToolbarIcon(Icons.Default.FormatQuote, "Quote") { insertLinePrefix("> ") }
-                ToolbarIcon(Icons.Default.Code, "Code") { wrapSelection("`") }
-                ToolbarIcon(Icons.Default.Link, "Link") { wrapSelection("[", "](url)") }
-                VerticalBar()
-                ToolbarIcon(Icons.Default.FormatIndentDecrease, "Outdent") { indent(false) }
-                ToolbarIcon(Icons.Default.FormatIndentIncrease, "Indent") { indent(true) }
             }
         }
+    }
+}
+
+@Composable
+private fun livePreviewPalette(): LivePreviewPalette {
+    val colors = MaterialTheme.colorScheme
+    return remember(colors) {
+        LivePreviewPalette(
+            quoteColor = colors.onSurfaceVariant,
+            linkColor = colors.primary,
+            codeBackground = colors.surfaceVariant,
+            highlightBackground = colors.tertiaryContainer,
+            highlightText = colors.onTertiaryContainer,
+            markerColor = colors.onSurfaceVariant.copy(alpha = 0.45f)
+        )
     }
 }
 

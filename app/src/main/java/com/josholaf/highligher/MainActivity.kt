@@ -17,8 +17,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.josholaf.highligher.core.design.HighligherTheme
+import com.josholaf.highligher.core.design.LocalBottomBarVisible
 import com.josholaf.highligher.core.design.ThemeViewModel
 import com.josholaf.highligher.feature.home.HomeScreen
 import com.josholaf.highligher.feature.library.LibraryScreen
@@ -62,38 +66,43 @@ fun HighligherAppRoot() {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val bottomBarVisible = remember { mutableStateOf(true) }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing,
-        bottomBar = {
-            NavigationBar {
-                destinations.forEach { dest ->
-                    NavigationBarItem(
-                        selected = currentRoute == dest.route,
-                        onClick = {
-                            navController.navigate(dest.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(dest.icon, contentDescription = dest.label) },
-                        label = { Text(dest.label) }
-                    )
+    CompositionLocalProvider(LocalBottomBarVisible provides bottomBarVisible) {
+        Scaffold(
+            contentWindowInsets = WindowInsets.safeDrawing,
+            bottomBar = {
+                if (bottomBarVisible.value) {
+                    NavigationBar {
+                        destinations.forEach { dest ->
+                            NavigationBarItem(
+                                selected = currentRoute == dest.route,
+                                onClick = {
+                                    navController.navigate(dest.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(dest.icon, contentDescription = dest.label) },
+                                label = { Text(dest.label) }
+                            )
+                        }
+                    }
                 }
             }
-        }
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = Dest.Home.route,
-            modifier = Modifier.padding(padding)
-        ) {
-            composable(Dest.Home.route) { HomeScreen() }
-            composable(Dest.Library.route) { LibraryScreen() }
-            composable(Dest.Settings.route) { SettingsScreen() }
+        ) { padding ->
+            NavHost(
+                navController = navController,
+                startDestination = Dest.Home.route,
+                modifier = Modifier.padding(padding)
+            ) {
+                composable(Dest.Home.route) { HomeScreen() }
+                composable(Dest.Library.route) { LibraryScreen() }
+                composable(Dest.Settings.route) { SettingsScreen() }
+            }
         }
     }
 }

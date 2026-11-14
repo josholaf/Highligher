@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.josholaf.highligher.core.design.LocalBottomBarVisible
 import com.josholaf.highligher.core.markdown.MarkdownEditor
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.domain.model.Document
@@ -107,6 +109,12 @@ fun DocumentScreen(
     val context = LocalContext.current
     var editingTitle by remember { mutableStateOf(false) }
     var titleDraft by remember { mutableStateOf("") }
+
+    val bottomBarVisible = LocalBottomBarVisible.current
+    DisposableEffect(Unit) {
+        bottomBarVisible.value = false
+        onDispose { bottomBarVisible.value = true }
+    }
 
     LaunchedEffect(documentId) { viewModel.load(documentId) }
 
