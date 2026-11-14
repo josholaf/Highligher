@@ -6,7 +6,8 @@ data class Folder(
     val id: String,
     val name: String,
     val parentId: String? = null,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
+    val iconName: String? = null
 )
 
 data class Document(

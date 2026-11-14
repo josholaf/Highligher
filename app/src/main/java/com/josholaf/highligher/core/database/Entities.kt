@@ -10,7 +10,9 @@ data class FolderEntity(
     @PrimaryKey val id: String,
     val name: String,
     val parentId: String? = null,
-    val createdAt: Long
+    val createdAt: Long,
+    /** Lucide icon name, e.g. "book-open", "stethoscope" */
+    val iconName: String? = null
 )
 
 @Entity(
