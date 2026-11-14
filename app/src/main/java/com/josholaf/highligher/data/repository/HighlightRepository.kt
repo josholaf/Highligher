@@ -44,10 +44,15 @@ class HighlightRepository @Inject constructor(
 
     suspend fun createFolder(name: String, parentId: String? = null): Folder {
         val id = UUID.randomUUID().toString()
-        val entity = FolderEntity(id, name.trim(), parentId, Instant.now().toEpochMilli())
+        val entity = FolderEntity(id, name.trim(), parentId, Instant.now().toEpochMilli(), iconName = null)
         db.folderDao().upsert(entity)
         File(rootDir, sanitize(entity.name)).mkdirs()
         return entity.toDomain()
+    }
+
+    suspend fun setFolderIcon(folderId: String, iconName: String?) {
+        val existing = db.folderDao().getById(folderId) ?: return
+        db.folderDao().upsert(existing.copy(iconName = iconName?.ifBlank { null }))
     }
 
     suspend fun renameFolder(id: String, newName: String) {
@@ -210,9 +215,7 @@ class HighlightRepository @Inject constructor(
     suspend fun createBlankNote(title: String, folderId: String): Document {
         val doc = createDocument(title.ifBlank { "Untitled" }, folderId)
         val file = File(doc.filePath)
-        if (file.exists()) {
-            file.writeText(file.readText().trimEnd() + "\n\n")
-        }
+        if (file.exists()) file.writeText(file.readText().trimEnd() + "\n\n")
         return doc
     }
 
@@ -225,9 +228,18 @@ class HighlightRepository @Inject constructor(
 
     fun storageUsageBytes(): Long = rootDir.walkTopDown().filter { it.isFile }.map { it.length() }.sum()
 
-    private fun FolderEntity.toDomain() = Folder(id, name, parentId, Instant.ofEpochMilli(createdAt))
-    private fun DocumentEntity.toDomain() = Document(id, title, folderId, filePath, Instant.ofEpochMilli(updatedAt))
-    private fun HighlightEntity.toDomain() = Highlight(id, documentId, selectedText, sourceUrl, note, Instant.ofEpochMilli(createdAt))
-    private fun Highlight.toEntity() = HighlightEntity(id, documentId, selectedText, sourceUrl, note, createdAt.toEpochMilli())
-    private fun sanitize(name: String): String = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifBlank { "untitled" }
+    private fun FolderEntity.toDomain() =
+        Folder(id, name, parentId, Instant.ofEpochMilli(createdAt), iconName)
+
+    private fun DocumentEntity.toDomain() =
+        Document(id, title, folderId, filePath, Instant.ofEpochMilli(updatedAt))
+
+    private fun HighlightEntity.toDomain() =
+        Highlight(id, documentId, selectedText, sourceUrl, note, Instant.ofEpochMilli(createdAt))
+
+    private fun Highlight.toEntity() =
+        HighlightEntity(id, documentId, selectedText, sourceUrl, note, createdAt.toEpochMilli())
+
+    private fun sanitize(name: String): String =
+        name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifBlank { "untitled" }
 }
