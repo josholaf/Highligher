@@ -1,6 +1,5 @@
 <p align="center">
-  <img width="1211" height="1299" alt="Highligher Open Source Project Header" src="https://github.com/user-attachments/assets/41883a5a-9f65-435c-b2fb-362a8cf14a06" />
-" alt="Highligher icon" width="180" />
+  <img width="450" height="460" alt="Highligher Open Source Project Header" src="https://github.com/user-attachments/assets/41883a5a-9f65-435c-b2fb-362a8cf14a06" />
 </p>
 
 <h1 align="center">Highligher</h1>
