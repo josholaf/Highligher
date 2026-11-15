@@ -54,9 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Markdown source editor with an Obsidian-style live preview: syntax markers are
- * hidden on every line except the one being edited, and the toolbar floats above
- * the keyboard instead of pushing the body.
+ * Markdown source editor with inline live preview. Syntax markers are hidden on
+ * every line except the one being edited, while the formatting toolbar stays
+ * accessible above the keyboard.
  */
 @Composable
 fun MarkdownEditor(
