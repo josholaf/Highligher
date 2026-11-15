@@ -186,4 +186,4 @@ Run `./gradlew testDebugUnitTest` before opening a pull request, and note any AP
 
 ## License
 
-[MIT](LICENSE). Lucide naming is used under the Lucide ISC license for icon identifiers; vector glyphs use Material Icons Extended on device.
+[MIT](LICENSE). The app uses the [Manrope typeface](https://fonts.google.com/specimen/Manrope), licensed under the SIL Open Font License 1.1 ([license](licenses/Manrope-OFL.txt)). Lucide naming is used under the Lucide ISC license for icon identifiers; vector glyphs use Material Icons Extended on device.

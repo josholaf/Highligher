@@ -8,6 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.material3.Typography
+import com.josholaf.highligher.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,6 +29,9 @@ val Paper = Color(0xFFF3F1E9)
 val WarmAccent = Color(0xFFC6A66A)
 val OnPaper = Color(0xFF1A1A1A)
 val Muted = Color(0xFF6B6B6B)
+
+private val ManropeFontFamily = FontFamily(Font(R.font.manrope_family))
+private val AppTypography = Typography(defaultFontFamily = ManropeFontFamily)
 
 private val LightColors = lightColorScheme(
     primary = HighlightGreen,
@@ -77,6 +84,7 @@ fun HighligherTheme(
     }
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = AppTypography,
         content = content
     )
 }
