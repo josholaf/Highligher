@@ -130,7 +130,7 @@ private class Emitter(private val source: String) {
 private val thematicBreak = Regex("^\\s{0,3}([-*_])(?:\\s*\\1){2,}\\s*$")
 private val headingPrefix = Regex("^(#{1,6})\\s+")
 private val quotePrefix = Regex("^\\s{0,3}>\\s?")
-private val taskPrefix = Regex("^(\\s*)[-*+]\\s+\\[( xX)]\\s+")
+private val taskPrefix = Regex("^(\\s*)[-*+]\\s+\\[([ xX])\\]\\s+")
 private val bulletPrefix = Regex("^(\\s*)[-*+]\\s+")
 private val orderedPrefix = Regex("^(\\s*\\d+[.)])\\s+")
 
