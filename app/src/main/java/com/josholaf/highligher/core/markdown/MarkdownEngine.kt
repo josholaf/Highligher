@@ -77,12 +77,18 @@ class MarkdownEngine @Inject constructor() {
     fun renderHighlightBlock(h: Highlight): String = buildString {
         appendLine("<!-- highlight:${h.id} -->")
         appendLine()
-        val heading = h.selectedText.lineSequence().firstOrNull()?.take(60)?.trim()
-            ?.takeIf { it.isNotBlank() } ?: "Highlight"
-        appendLine("### $heading")
-        appendLine()
-        appendLine("> ${h.selectedText.replace("\n", "\n> ")}")
-        appendLine()
+        val body = h.selectedText.trim()
+        if (looksLikeStructuredMarkdown(body)) {
+            appendLine(body)
+            appendLine()
+        } else {
+            val heading = body.lineSequence().firstOrNull()?.take(60)?.trim()
+                ?.takeIf { it.isNotBlank() } ?: "Highlight"
+            appendLine("### $heading")
+            appendLine()
+            appendLine("> ${body.replace("\n", "\n> ")}")
+            appendLine()
+        }
         if (!h.sourceUrl.isNullOrBlank()) {
             appendLine("**Source:** [${h.sourceUrl}](${h.sourceUrl})")
             appendLine()
@@ -94,6 +100,14 @@ class MarkdownEngine @Inject constructor() {
             appendLine()
         }
         appendLine("---")
+    }
+
+    private fun looksLikeStructuredMarkdown(body: String): Boolean {
+        val first = body.lineSequence().firstOrNull()?.trim().orEmpty()
+        if (first.startsWith("#")) return true
+        if ("**" in body || "*" in body || "~~" in body || "<u>" in body) return true
+        if ("](http" in body) return true
+        return false
     }
 
     fun touchUpdatedFrontMatter(file: File) {

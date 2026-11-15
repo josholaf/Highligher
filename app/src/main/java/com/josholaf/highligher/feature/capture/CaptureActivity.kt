@@ -2,7 +2,6 @@ package com.josholaf.highligher.feature.capture
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -12,11 +11,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.josholaf.highligher.R
 import com.josholaf.highligher.core.design.HighligherTheme
 import com.josholaf.highligher.core.design.ThemeViewModel
+import com.josholaf.highligher.core.markdown.SpannedMarkdown
 import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * Entry point for ACTION_PROCESS_TEXT.
+ * Converts Spanned selection (when the source provides style spans) to Markdown
+ * so headings/bold/italic land in the note without extra user action.
+ */
 @AndroidEntryPoint
 class CaptureActivity : ComponentActivity() {
 
@@ -25,11 +29,8 @@ class CaptureActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val selectedText = intent
-            ?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+        val raw = intent?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+        val selectedText = SpannedMarkdown.toMarkdown(raw)
 
         if (selectedText.isBlank()) {
             finish()
@@ -45,14 +46,7 @@ class CaptureActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     CaptureScreen(
                         viewModel = viewModel,
-                        onSaved = {
-                            Toast.makeText(
-                                this,
-                                getString(R.string.capture_saved_toast),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            finish()
-                        },
+                        onSaved = { finish() },
                         onCancel = { finish() }
                     )
                 }

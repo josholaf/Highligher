@@ -7,50 +7,78 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
-Highligher is an offline-first Android app for turning highlights from anything you read into organised Markdown notes. Select text in a browser or any other app, send it to Highligher, and it lands in the note you choose. Then edit the note full-screen with an Obsidian-style live editor.
+Highligher is an offline-first Android app that turns selections from anything you read into organised Markdown notes. It registers for the system **Process Text** action: select text in a browser or another app, send it to Highligher, choose a folder and note, and the selection is appended to a Markdown file on your device. Then edit that note full-screen in an Obsidian-style editor with live preview.
 
-No account. No sync service. Your library is a folder of `.md` files on your device.
+No account. No sync service. Your library is a folder of `.md` files.
 
 ## Features
 
 **Capture**
-- Send selected text with Android's `ACTION_PROCESS_TEXT` menu from any app
-- Pick a folder and note, add a personal note, save
-- Last destination is remembered, so repeat captures are two taps
-- A home-screen widget shows the last capture and where it went
+- System capture through `ACTION_PROCESS_TEXT`, from any app that exposes a selection menu
+- Style-aware capture — when the source provides a `Spanned` selection, bold, italic, underline, strikethrough, links and heading-sized runs become Markdown automatically
+- Destination picker with remembered folder and note, so repeat captures are two taps
+- Home-screen widget showing the last capture and where it went
 
 **Library**
-- Folders and notes, with a folder tree and per-folder note counts
-- A folder note for context that belongs to the whole folder
-- Full-text search across highlight text, notes and sources, with recent searches
-- Twelve note colours
+- Collapsible folder tree with nested notes and per-folder counts
+- Searchable Lucide-named folder icons, shown in the library and in the capture picker
+- Full-text search across highlight text, notes and sources, with persisted recent searches
+- Twelve note colours, reminders, themes (system / light / dark)
 
 **Editor**
 - Obsidian-style live preview: Markdown renders inline, and the syntax markers reveal themselves on the line you are editing
-- Floating formatting toolbar above the keyboard — bold, italic, heading, lists, quote, code, link, indent
+- Floating formatting toolbar above the keyboard — heading, bold, italic, underline, lists, quote, code, link, indent, undo and redo
 - Full preview mode for the rendered document
-- Undo and redo, debounced autosave, rename from the title bar
+- Debounced autosave, rename from the title bar, share a note as text
 
 **Privacy**
-- Everything stays on device; capture never touches the network
-- Uninstalling removes the library and index
+- Capture and editing never require the network
+- No analytics or account backend in the core path
+- Uninstalling removes the library and its index
 
-## Markdown support
+## Style-aware capture
 
-| Syntax | Live preview |
+Android's Process Text extra is a `CharSequence`. When the providing app attaches style spans, Highligher maps them to Markdown:
+
+| Source span | Markdown |
 |---|---|
-| `# Heading` … `###### Heading` | Sized and bold, hash marks hidden |
+| Bold | `**text**` |
+| Italic | `*text*` |
+| Underline | `<u>text</u>` |
+| Strikethrough | `~~text~~` |
+| Heading-sized run on a short line | `#` / `##` / `###` |
+| URL span | `[text](url)` |
+
+Many mobile browsers still pass plain text only. In that case Highligher cannot invent structure, and the selection lands as plain prose in a blockquote.
+
+## Live preview
+
+The editor renders Markdown as you type. Everything except the line holding the caret is displayed without its syntax markers; tap a line and its raw source appears.
+
+| Syntax | Rendered as |
+|---|---|
+| `# Heading` … `###### Heading` | Sized heading, hash marks hidden |
 | `**bold**`, `*italic*`, `~~strike~~` | Styled inline |
 | `` `code` `` | Monospace with a subtle background |
-| `==highlight==` | Highlighted, matching the app's capture style |
+| `==highlight==` | Highlighted, matching the capture block style |
 | `> quote` | Quoted with a rule marker |
 | `- item`, `1. item` | Bullets and numbering |
 | `- [ ] task`, `- [x] task` | Checkboxes, completed items struck through |
-| `[text](url)` | Text shown, destination hidden until you edit the line |
+| `[text](url)` | Link text, destination hidden until you edit the line |
+
+## Requirements
+
+| | |
+|---|---|
+| Min SDK | 26 |
+| Target / compile SDK | 35 |
+| Language | Kotlin |
+| UI | Jetpack Compose, Material 3 |
+| Persistence | Room + DataStore + Markdown files |
 
 ## Install
 
-Prebuilt APKs are published on the [releases page](https://github.com/josholaf/Highligher/releases).
+Prebuilt debug APKs are attached to [releases](https://github.com/josholaf/Highligher/releases) by CI. They are not signed for distribution.
 
 ### Build from source
 
@@ -63,17 +91,37 @@ cd Highligher
 # APK: app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Open the project in Android Studio if you prefer: sync Gradle, then run the `app` configuration on API 26 or newer.
+Or open the project in Android Studio, sync Gradle, and run the `app` configuration on API 26 or newer.
 
-## How it works
+If the Gradle Wrapper is missing from the checkout, generate it once with `gradle wrapper --gradle-version 8.11.1` or let Android Studio create it.
 
-Captured text is appended to a Markdown file under the app's private storage:
+Run the unit tests:
+
+```bash
+./gradlew testDebugUnitTest
+```
+
+## Capture flow
+
+1. Launch Highligher once so the Process Text target is registered.
+2. Select text in another app.
+3. Choose **Highligher** from the selection toolbar.
+4. Review the text, add an optional note and source, and pick a folder and note.
+5. Save — the selection is appended to the chosen Markdown file.
+
+First launch seeds an **Inbox / Quick captures** note, and the last destination is remembered.
+
+## Storage
+
+Markdown files are the source of truth:
 
 ```
-files/highlight/library/<FolderName>/<DocumentTitle>.md
+files/highlight/library/
+  <FolderName>/
+    <NoteTitle>.md
 ```
 
-Notes start with YAML front matter, and each highlight is written as a block with an HTML comment anchor so it can be edited or deleted later:
+Notes carry YAML front matter, and each highlight is a block anchored by an HTML comment so it can be edited or deleted later:
 
 ```markdown
 <!-- highlight:8f21c0a4 -->
@@ -91,45 +139,38 @@ Notes start with YAML front matter, and each highlight is written as a block wit
 ---
 ```
 
-Room indexes note and highlight metadata for search; the Markdown files stay the source of truth.
+Room (`highligher.db`) indexes folders, documents and highlights for search. Folder icons are stored as Lucide-style name strings on the folder row; glyphs render from Material Icons Extended on device.
 
-## Stack
-
-| Layer | Choice |
-|---|---|
-| UI | Jetpack Compose, Material 3 |
-| DI | Hilt |
-| Metadata index | Room (KSP) |
-| Preferences | DataStore |
-| Markdown render | CommonMark with GFM tables |
-| Markdown storage | Plain files via the Kotlin File API |
-
-## Project structure
+## Architecture
 
 ```
-app/src/main/java/com/josholaf/highligher/
-├── core/
-│   ├── markdown/      editor, live preview, renderer, file engine
-│   ├── database/      Room entities, DAOs, database
-│   └── datastore/     capture destination and theme preferences
-├── data/repository/   library and search
-├── domain/model/      Folder, Document, Highlight
-└── feature/           capture, home, library, documents, settings, widget
+feature/capture    PROCESS_TEXT UI + destination picker
+feature/library    folder tree + navigation into notes
+feature/documents  continuous Markdown editor
+core/markdown      Spanned -> Markdown, live preview, file engine
+core/icons         searchable Lucide-named icon catalog
+core/database      Room entities, DAOs, database
+core/datastore     capture destination, theme, recent searches
+data/repository    Room + filesystem coordination
 ```
+
+MVVM with Hilt. Markdown files hold the content; Room is the index.
+
+## Project status
+
+Working offline MVP: capture, style mapping when spans exist, library tree with folder icons, continuous notes with live preview, themes, search, share, widget.
+
+Not built yet: multi-device sync, authenticated backup, OCR, and nested subfolders beyond a parent id.
 
 ## Contributing
 
 Issues and pull requests are welcome. Two rules keep the app what it is:
 
-1. Keep it offline-first. The capture path must never make a network call.
-2. Keep Markdown as the source of truth. Anything the UI needs beyond search belongs in a file, not only in the database.
+1. Keep the capture path offline. It must not require a network call.
+2. Keep Markdown as the source of truth. Anything beyond search belongs in a file, not only in the database.
 
-Run the unit tests before opening a pull request:
-
-```bash
-./gradlew testDebugUnitTest
-```
+Run `./gradlew testDebugUnitTest` before opening a pull request, and note any API 26–35 constraints your change touches.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Lucide naming is used under the Lucide ISC license for icon identifiers; vector glyphs use Material Icons Extended on device.
