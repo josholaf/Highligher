@@ -6,10 +6,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,17 +30,20 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.josholaf.highligher.core.design.LocalBottomBarVisible
 import com.josholaf.highligher.core.markdown.MarkdownEditor
+import com.josholaf.highligher.core.markdown.MarkdownPreview
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.domain.model.Document
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -72,7 +81,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             val doc = repository.getDocument(id)
             val text = repository.readDocumentText(id)
-            _ui.update { it.copy(document = doc, rawText = text, loading = false, dirty = false) }
+            _ui.update { it.copy(document = doc, rawText = text, loading = false, dirty = false, saving = false) }
         }
     }
 
@@ -81,10 +90,20 @@ class DocumentViewModel @Inject constructor(
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             delay(500)
-            val id = documentId ?: return@launch
-            repository.writeDocumentText(id, text)
-            _ui.update { it.copy(dirty = false, saving = false) }
+            persist(text)
         }
+    }
+
+    fun saveNow() {
+        val text = _ui.value.rawText
+        saveJob?.cancel()
+        saveJob = viewModelScope.launch { persist(text) }
+    }
+
+    private suspend fun persist(text: String) {
+        val id = documentId ?: return
+        repository.writeDocumentText(id, text)
+        _ui.update { it.copy(dirty = false, saving = false) }
     }
 
     fun renameTitle(title: String) {
@@ -107,8 +126,10 @@ fun DocumentScreen(
 ) {
     val state by viewModel.ui.collectAsState()
     val context = LocalContext.current
+    var editing by remember(documentId) { mutableStateOf(false) }
     var editingTitle by remember { mutableStateOf(false) }
     var titleDraft by remember { mutableStateOf("") }
+    var menuExpanded by remember { mutableStateOf(false) }
 
     val bottomBarVisible = LocalBottomBarVisible.current
     DisposableEffect(Unit) {
@@ -126,44 +147,94 @@ fun DocumentScreen(
                     Column {
                         Text(state.document?.title ?: "Note", style = MaterialTheme.typography.titleMedium, maxLines = 1)
                         val status = when {
-                            state.dirty || state.saving -> "Saving…"
-                            !state.loading -> "Saved"
-                            else -> ""
+                            state.saving || state.dirty -> "Saving changes…"
+                            !state.loading -> "Saved on this device"
+                            else -> "Opening note…"
                         }
-                        if (status.isNotEmpty()) {
-                            Text(status, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        Text(status, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        viewModel.saveNow()
+                        onBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    TextButton(onClick = {
-                        titleDraft = state.document?.title.orEmpty()
-                        editingTitle = true
-                    }) { Text("Rename") }
-                    IconButton(onClick = {
-                        val send = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, state.document?.title ?: "Note")
-                            putExtra(Intent.EXTRA_TEXT, viewModel.exportText())
+                    if (editing) {
+                        IconButton(onClick = {
+                            viewModel.saveNow()
+                            editing = false
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = "Finish editing")
                         }
-                        context.startActivity(Intent.createChooser(send, "Share note"))
-                    }) { Icon(Icons.Default.Share, contentDescription = "Share") }
+                    } else {
+                        IconButton(onClick = { editing = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit note")
+                        }
+                    }
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Rename note") },
+                            onClick = {
+                                menuExpanded = false
+                                titleDraft = state.document?.title.orEmpty()
+                                editingTitle = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Share note") },
+                            onClick = {
+                                menuExpanded = false
+                                val send = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, state.document?.title ?: "Note")
+                                    putExtra(Intent.EXTRA_TEXT, viewModel.exportText())
+                                }
+                                context.startActivity(Intent.createChooser(send, "Share note"))
+                            }
+                        )
+                    }
                 }
             )
         }
     ) { padding ->
-        MarkdownEditor(
-            value = state.rawText,
-            onValueChange = viewModel::updateRaw,
-            modifier = Modifier.fillMaxSize().padding(padding),
-            placeholder = "Start writing…\n\nCaptured text is appended into this same note.",
-            fillMaxHeight = true
-        )
+        if (editing) {
+            key(documentId) {
+                MarkdownEditor(
+                    value = state.rawText,
+                    onValueChange = viewModel::updateRaw,
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    placeholder = "Start writing…\n\nCaptured text is added to this note.",
+                    fillMaxHeight = true
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(padding)
+                    .padding(horizontal = 22.dp, vertical = 20.dp)
+            ) {
+                if (state.rawText.isBlank() && !state.loading) {
+                    Text("This note is empty.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "Tap Edit to start writing, or capture selected text from another app.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                } else {
+                    MarkdownPreview(state.rawText, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
     }
 
     if (editingTitle) {
@@ -174,7 +245,7 @@ fun DocumentScreen(
                 OutlinedTextField(
                     value = titleDraft,
                     onValueChange = { titleDraft = it },
-                    label = { Text("Title") },
+                    label = { Text("Note title") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
