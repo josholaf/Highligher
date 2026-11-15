@@ -11,7 +11,8 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
-Highligher is an offline-first Android app that turns selections from anything you read into organised Markdown notes. It registers for the system **Process Text** action: select text in a browser or another app, send it to Highligher, choose a folder and note, and the selection is appended to a Markdown file on your device. Then edit that note full-screen in an Obsidian-style editor with live preview.
+<p style="text-align="center""> Highligher is an offline-first Android app that turns selections from anything you read into organised Markdown notes. It registers for the system **Process Text** action: select text in a browser or another app, send it to Highligher, choose a folder and note, and the selection is appended to a Markdown file on your device. Then edit that note full-screen in an editor with live preview.
+</p>
 
 No account. No sync service. Your library is a folder of `.md` files.
 
