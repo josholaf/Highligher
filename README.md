@@ -26,7 +26,7 @@ No account. No sync service. Your library is a folder of `.md` files.
 - Twelve note colours, reminders, themes (system / light / dark)
 
 **Editor**
-- Obsidian-style live preview: Markdown renders inline, and the syntax markers reveal themselves on the line you are editing
+- Live-preview: Markdown renders inline, and the syntax markers reveal themselves on the line you are editing
 - Floating formatting toolbar above the keyboard — heading, bold, italic, underline, lists, quote, code, link, indent, undo and redo
 - Full preview mode for the rendered document
 - Debounced autosave, rename from the title bar, share a note as text
@@ -158,7 +158,7 @@ MVVM with Hilt. Markdown files hold the content; Room is the index.
 
 ## Project status
 
-Working offline MVP: capture, style mapping when spans exist, library tree with folder icons, continuous notes with live preview, themes, search, share, widget.
+ capture, style mapping when spans exist, library tree with folder icons, continuous notes with live preview, themes, search, share, widget.
 
 Not built yet: multi-device sync, authenticated backup, OCR, and nested subfolders beyond a parent id.
 
