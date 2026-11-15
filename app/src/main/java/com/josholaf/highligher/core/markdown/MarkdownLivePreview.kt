@@ -35,8 +35,8 @@ data class LivePreviewPalette(
 
 /**
  * A styled view of the Markdown source with the syntax markers hidden on every
- * line except the one the caret sits on, the way Obsidian's live preview
- * behaves.
+ * line except the one the caret sits on, keeping the document readable while
+ * preserving editable Markdown source.
  */
 class LivePreviewDocument internal constructor(
     val text: AnnotatedString,
