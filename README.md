@@ -91,7 +91,20 @@ The editor renders Markdown as you type. Everything except the line holding the 
 
 ## Install
 
-Prebuilt debug APKs are attached to [releases](https://github.com/josholaf/Highligher/releases) by CI. They are not signed for distribution.
+Signed release APKs are attached to [GitHub Releases](https://github.com/josholaf/Highligher/releases). Debug APKs remain available as workflow artifacts for testing.
+
+### Signed release builds
+
+Release APKs are built and signed by the `.github/workflows/android-release.yml` workflow. Configure these repository secrets before running it:
+
+- `ANDROID_KEYSTORE_BASE64`: base64-encoded contents of your private keystore file.
+- `ANDROID_KEYSTORE_PASSWORD`: keystore password.
+- `ANDROID_KEY_ALIAS`: key alias.
+- `ANDROID_KEY_PASSWORD`: key password.
+
+Generate a release key once and keep a secure backup. **Do not commit the keystore or its passwords.** The same signing key must be retained for future updates to this app.
+
+The existing `v1.0.1` tag is already in use, so the signed first release uses tag `v1.0.1-signed` while keeping the Android app version name at `1.0.1`. Run **Actions → Build signed release APK → Run workflow** after configuring the secrets.
 
 ### Build from source
 

@@ -7,3 +7,7 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Android signing material (never commit)
+*.jks
+*.keystore
