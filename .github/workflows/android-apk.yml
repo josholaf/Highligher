@@ -3,6 +3,7 @@ name: Build debug APK
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -12,7 +13,7 @@ on:
         default: "1.0.2"
         type: string
       version_code:
-        description: "Android version code (must be higher than the previous release)"
+        description: "Android version code"
         required: true
         default: "4"
         type: string
@@ -25,11 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
- release/v1.0.1-signed-apk
       DEFAULT_VERSION_NAME: "1.0.1"
       DEFAULT_VERSION_CODE: "3"
-=======
-main
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +56,6 @@ main
         id: build_apk
         shell: bash
         env:
- release/v1.0.1-signed-apk
           INPUT_VERSION_NAME: ${{ inputs.version_name }}
           INPUT_VERSION_CODE: ${{ inputs.version_code }}
         run: |
@@ -86,32 +83,6 @@ main
             -PappVersionName="$VERSION_NAME" \
             -PappVersionCode="$VERSION_CODE" \
             --no-daemon
-=======
-          VERSION_NAME: ${{ inputs.version_name }}
-          VERSION_CODE: ${{ inputs.version_code }}
-        run: |
-          set -euo pipefail
-
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
-              echo "Invalid version name: $VERSION_NAME"
-              exit 1
-            fi
-
-            if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
-              echo "Version code must be a positive integer."
-              exit 1
-            fi
-
-            gradle assembleDebug \
-              -PappVersionName="$VERSION_NAME" \
-              -PappVersionCode="$VERSION_CODE" \
-              --no-daemon
-          else
-            VERSION_NAME="$(grep -E '^[[:space:]]*versionName[[:space:]]*=' app/build.gradle.kts | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')"
-            gradle assembleDebug --no-daemon
-          fi
- main
 
           APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk"
           APK_NAME="Highligher-v${VERSION_NAME}-debug.apk"
