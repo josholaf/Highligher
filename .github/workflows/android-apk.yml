@@ -6,15 +6,27 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      version_name:
+        description: "App version name (for example, 1.0.2)"
+        required: true
+        default: "1.0.2"
+        type: string
+      version_code:
+        description: "Android version code (must be higher than the previous release)"
+        required: true
+        default: "4"
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apk:
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
+
     steps:
       - uses: actions/checkout@v4
 
@@ -38,23 +50,47 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
 
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
+      - name: Build versioned debug APK
+        id: build_apk
+        shell: bash
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
 
-      - name: Upload APK artifact
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+              echo "Invalid version name: $VERSION_NAME"
+              exit 1
+            fi
+
+            if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+              echo "Version code must be a positive integer."
+              exit 1
+            fi
+
+            gradle assembleDebug \
+              -PappVersionName="$VERSION_NAME" \
+              -PappVersionCode="$VERSION_CODE" \
+              --no-daemon
+          else
+            VERSION_NAME="$(grep -E '^[[:space:]]*versionName[[:space:]]*=' app/build.gradle.kts | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')"
+            gradle assembleDebug --no-daemon
+          fi
+
+          APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk"
+          APK_NAME="Highligher-v${VERSION_NAME}-debug.apk"
+          cp "$APK_SOURCE" "app/build/outputs/apk/debug/$APK_NAME"
+
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_path=app/build/outputs/apk/debug/$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "Built $APK_NAME"
+
+      - name: Upload versioned APK
         uses: actions/upload-artifact@v4
         with:
-          name: highligher-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: highligher-v${{ steps.build_apk.outputs.version_name }}-debug
+          path: ${{ steps.build_apk.outputs.apk_path }}
           if-no-files-found: error
-
-      - name: Update draft release with APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          prerelease: true
-          tag_name: v1.0.1
-          name: "Highligher v1.0.1 (draft)"
-          body: "Automatic draft debug build from main. v1.0.1: inline live-preview Markdown editor with a floating formatting toolbar, Lucide folder icons, style-aware Spanned capture, full-text search with recent queries, and a home-screen widget. Debug build, not signed for distribution."
-          files: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
