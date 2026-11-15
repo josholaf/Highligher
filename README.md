@@ -1,20 +1,29 @@
-# Highligher
+<p align="center">
+  <img src="assets/highligher-icon.svg" alt="Highligher icon" width="180" />
+</p>
+
+<h1 align="center">Highligher</h1>
 
 <p align="center">
-  <img src="assets/highligher-icon.svg" alt="Highligher app icon" width="180" />
+  <strong>Capture. Organise. Read.</strong><br/>
+  A simple, offline-first Android app for saving selected text as organised Markdown notes.
 </p>
 
-**Capture what you read. Keep it in plain Markdown.**
-
-[![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)](https://github.com/josholaf/Highligher)
-[![Min SDK](https://img.shields.io/badge/minSdk-26-blue)](https://github.com/josholaf/Highligher)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![License](https://img.shields.io/badge/license-MIT-black)](LICENSE)
-
-<p style="text-align="center""> Highligher is an offline-first Android app that turns selections from anything you read into organised Markdown notes. It registers for the system **Process Text** action: select text in a browser or another app, send it to Highligher, choose a folder and note, and the selection is appended to a Markdown file on your device. Then edit that note full-screen in an editor with live preview.
+<p align="center">
+  <a href="https://github.com/josholaf/Highligher/releases"><img src="https://img.shields.io/github/v/release/josholaf/Highligher?display_name=tag" alt="Latest release"/></a>
+  <a href="https://github.com/josholaf/Highligher/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-black" alt="MIT License"/></a>
+  <img src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white" alt="Android"/>
+  <img src="https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin"/>
 </p>
 
-No account. No sync service. Your library is a folder of `.md` files.
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
+
+---
 
 ## Features
 
