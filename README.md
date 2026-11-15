@@ -31,10 +31,10 @@ No account. No sync service. Your library is a folder of `.md` files.
 - Twelve note colours, reminders, themes (system / light / dark)
 
 **Editor**
-- Live-preview: Markdown renders inline, and the syntax markers reveal themselves on the line you are editing
+- Read-first note view renders Markdown cleanly; tap Edit to enter the full editor
 - Floating formatting toolbar above the keyboard — heading, bold, italic, underline, lists, quote, code, link, indent, undo and redo
-- Full preview mode for the rendered document
-- Debounced autosave, rename from the title bar, share a note as text
+- Inline live preview while editing, with syntax markers shown on the active line
+- Debounced autosave, explicit finish-editing action, rename and share from the note menu
 
 **Privacy**
 - Capture and editing never require the network
