@@ -23,8 +23,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing is configured only when CI (or a local developer) provides a keystore.
+    // Never commit the keystore or passwords to the repository.
+    val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
+    if (!releaseKeystorePath.isNullOrBlank()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = requireNotNull(System.getenv("ANDROID_KEYSTORE_PASSWORD")) {
+                    "ANDROID_KEYSTORE_PASSWORD is required for a signed release build"
+                }
+                keyAlias = requireNotNull(System.getenv("ANDROID_KEY_ALIAS")) {
+                    "ANDROID_KEY_ALIAS is required for a signed release build"
+                }
+                keyPassword = requireNotNull(System.getenv("ANDROID_KEY_PASSWORD")) {
+                    "ANDROID_KEY_PASSWORD is required for a signed release build"
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
