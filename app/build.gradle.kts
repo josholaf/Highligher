@@ -6,6 +6,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
+val appVersionName = providers.gradleProperty("appVersionName").orElse("1.0.1").get()
+val appVersionCode = providers.gradleProperty("appVersionCode").orElse("3").get().toInt()
+
 android {
     namespace = "com.josholaf.highligher"
     compileSdk = 35
@@ -14,8 +17,8 @@ android {
         applicationId = "com.josholaf.highligher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.1"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
