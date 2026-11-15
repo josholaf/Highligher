@@ -56,5 +56,5 @@ jobs:
           prerelease: true
           tag_name: v1.0.1
           name: "Highligher v1.0.1 (draft)"
-          body: "Automatic draft debug build from main. v1.0.1: Obsidian-style live-preview Markdown editor with a floating formatting toolbar, Lucide folder icons, style-aware Spanned capture, full-text search with recent queries, and a home-screen widget. Debug build, not signed for distribution."
+          body: "Automatic draft debug build from main. v1.0.1: inline live-preview Markdown editor with a floating formatting toolbar, Lucide folder icons, style-aware Spanned capture, full-text search with recent queries, and a home-screen widget. Debug build, not signed for distribution."
           files: app/build/outputs/apk/debug/app-debug.apk
