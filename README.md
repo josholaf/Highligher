@@ -1,5 +1,9 @@
 # Highligher
 
+<p align="center">
+  <img src="assets/highligher-icon.svg" alt="Highligher app icon" width="180" />
+</p>
+
 **Capture what you read. Keep it in plain Markdown.**
 
 [![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)](https://github.com/josholaf/Highligher)
