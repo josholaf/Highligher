@@ -11,7 +11,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/josholaf/Highligher/releases"><img src="https://img.shields.io/github/v/release/josholaf/Highligher?display_name=tag" alt="Latest release"/></a>
   <a href="https://github.com/josholaf/Highligher/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-black" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white" alt="Android"/>
   <img src="https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin"/>
