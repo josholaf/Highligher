@@ -31,7 +31,25 @@ val OnPaper = Color(0xFF1A1A1A)
 val Muted = Color(0xFF6B6B6B)
 
 private val ManropeFontFamily = FontFamily(Font(R.font.manrope_family))
-private val AppTypography = Typography(defaultFontFamily = ManropeFontFamily)
+private val AppTypography = Typography().let { base ->
+    base.copy(
+        displayLarge = base.displayLarge.copy(fontFamily = ManropeFontFamily),
+        displayMedium = base.displayMedium.copy(fontFamily = ManropeFontFamily),
+        displaySmall = base.displaySmall.copy(fontFamily = ManropeFontFamily),
+        headlineLarge = base.headlineLarge.copy(fontFamily = ManropeFontFamily),
+        headlineMedium = base.headlineMedium.copy(fontFamily = ManropeFontFamily),
+        headlineSmall = base.headlineSmall.copy(fontFamily = ManropeFontFamily),
+        titleLarge = base.titleLarge.copy(fontFamily = ManropeFontFamily),
+        titleMedium = base.titleMedium.copy(fontFamily = ManropeFontFamily),
+        titleSmall = base.titleSmall.copy(fontFamily = ManropeFontFamily),
+        bodyLarge = base.bodyLarge.copy(fontFamily = ManropeFontFamily),
+        bodyMedium = base.bodyMedium.copy(fontFamily = ManropeFontFamily),
+        bodySmall = base.bodySmall.copy(fontFamily = ManropeFontFamily),
+        labelLarge = base.labelLarge.copy(fontFamily = ManropeFontFamily),
+        labelMedium = base.labelMedium.copy(fontFamily = ManropeFontFamily),
+        labelSmall = base.labelSmall.copy(fontFamily = ManropeFontFamily)
+    )
+}
 
 private val LightColors = lightColorScheme(
     primary = HighlightGreen,
