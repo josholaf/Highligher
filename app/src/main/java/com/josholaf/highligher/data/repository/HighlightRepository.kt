@@ -10,8 +10,11 @@ import com.josholaf.highligher.domain.model.Document
 import com.josholaf.highligher.domain.model.Folder
 import com.josholaf.highligher.domain.model.Highlight
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.io.File
 import java.time.Instant
@@ -25,6 +28,21 @@ data class HighlightSearchResult(
     val folderName: String?
 )
 
+data class FolderHit(val folder: Folder, val noteCount: Int)
+
+data class NoteHit(
+    val document: Document,
+    val folderName: String?,
+    val snippet: String?
+)
+
+data class LibrarySearch(
+    val highlights: List<HighlightSearchResult> = emptyList(),
+    val notes: List<NoteHit> = emptyList(),
+    val folders: List<FolderHit> = emptyList()
+) {
+    val isEmpty: Boolean get() = highlights.isEmpty() && notes.isEmpty() && folders.isEmpty()
+}
 @Singleton
 class HighlightRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -149,6 +167,40 @@ class HighlightRepository @Inject constructor(
                 HighlightSearchResult(h.toDomain(), doc?.title ?: "Unknown", doc?.folderId?.let { folderMap[it]?.name })
             }
         }
+    }
+
+
+    fun searchAll(query: String): Flow<LibrarySearch> {
+        val q = query.trim()
+        if (q.isEmpty()) return flowOf(LibrarySearch())
+        return combine(
+            search(q),
+            db.documentDao().observeAll(),
+            db.folderDao().observeAll()
+        ) { highlights, docs, folders ->
+            val qLower = q.lowercase()
+            val folderMap = folders.associateBy { it.id }
+            val domainDocs = docs.map { it.toDomain() }
+
+            val titleHits = domainDocs.filter { it.title.lowercase().contains(qLower) }
+            val titleIds = titleHits.map { it.id }.toSet()
+            val contentHits = domainDocs.filterNot { it.id in titleIds }.mapNotNull { doc ->
+                val file = File(doc.filePath)
+                if (!file.exists()) return@mapNotNull null
+                val text = runCatching { file.readText() }.getOrNull() ?: return@mapNotNull null
+                val idx = text.lowercase().indexOf(qLower)
+                if (idx < 0) return@mapNotNull null
+                val from = (idx - 40).coerceAtLeast(0)
+                val to = (idx + q.length + 80).coerceAtMost(text.length)
+                NoteHit(doc, folderMap[doc.folderId]?.name, text.substring(from, to).replace('\n', ' ').trim())
+            }
+            val noteHits = titleHits.map { NoteHit(it, folderMap[it.folderId]?.name, null) } + contentHits
+
+            val folderHits = folders.filter { it.name.lowercase().contains(qLower) }
+                .map { FolderHit(it.toDomain(), domainDocs.count { d -> d.folderId == it.id }) }
+
+            LibrarySearch(highlights, noteHits, folderHits)
+        }.flowOn(Dispatchers.IO)
     }
 
     fun observeHighlightCount(): Flow<Int> = db.highlightDao().observeCount()
