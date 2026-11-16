@@ -3,7 +3,7 @@ name: Build debug APK
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+    tags: ["v*", "!v*-signed"]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -26,8 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
-      DEFAULT_VERSION_NAME: "1.0.1"
-      DEFAULT_VERSION_CODE: "3"
 
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +50,7 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
 
-      - name: Build versioned debug APK
+      - name: Build debug APK
         id: build_apk
         shell: bash
         env:
@@ -64,38 +62,43 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             VERSION_NAME="$INPUT_VERSION_NAME"
             VERSION_CODE="$INPUT_VERSION_CODE"
+
+            if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+              echo "Invalid version name: $VERSION_NAME"
+              exit 1
+            fi
+
+            if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+              echo "Version code must be a positive integer."
+              exit 1
+            fi
+
+            gradle assembleDebug \
+              -PappVersionName="$VERSION_NAME" \
+              -PappVersionCode="$VERSION_CODE" \
+              --no-daemon
+
+            APK_NAME="Highligher-v${VERSION_NAME}-debug.apk"
+            ARTIFACT_NAME="highligher-v${VERSION_NAME}-debug"
           else
-            VERSION_NAME="$DEFAULT_VERSION_NAME"
-            VERSION_CODE="$DEFAULT_VERSION_CODE"
+            # Version comes from app/build.gradle.kts defaults, no duplication here.
+            gradle assembleDebug --no-daemon
+            APK_NAME="Highligher-debug-${GITHUB_SHA::7}.apk"
+            ARTIFACT_NAME="highligher-debug-${GITHUB_SHA::7}"
           fi
-
-          if ! [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
-            echo "Invalid version name: $VERSION_NAME"
-            exit 1
-          fi
-
-          if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
-            echo "Version code must be a positive integer."
-            exit 1
-          fi
-
-          gradle assembleDebug \
-            -PappVersionName="$VERSION_NAME" \
-            -PappVersionCode="$VERSION_CODE" \
-            --no-daemon
 
           APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk"
-          APK_NAME="Highligher-v${VERSION_NAME}-debug.apk"
-          cp "$APK_SOURCE" "app/build/outputs/apk/debug/$APK_NAME"
+          APK_PATH="app/build/outputs/apk/debug/$APK_NAME"
+          cp "$APK_SOURCE" "$APK_PATH"
 
-          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
-          echo "apk_path=app/build/outputs/apk/debug/$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "artifact=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
           echo "Built $APK_NAME"
 
-      - name: Upload versioned APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: highligher-v${{ steps.build_apk.outputs.version_name }}-debug
+          name: ${{ steps.build_apk.outputs.artifact }}
           path: ${{ steps.build_apk.outputs.apk_path }}
           if-no-files-found: error
           retention-days: 30
