@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -21,7 +20,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,7 +32,6 @@ import com.josholaf.highligher.core.design.HighligherTheme
 import com.josholaf.highligher.core.design.LocalBottomBarVisible
 import com.josholaf.highligher.core.design.ThemeViewModel
 import com.josholaf.highligher.feature.home.HomeScreen
-import com.josholaf.highligher.feature.library.LibraryScreen
 import com.josholaf.highligher.feature.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -55,11 +52,10 @@ class MainActivity : ComponentActivity() {
 
 private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
     data object Home : Dest("home", "Home", Icons.Default.Home)
-    data object Library : Dest("library", "Library", Icons.Default.LibraryBooks)
     data object Settings : Dest("settings", "Settings", Icons.Default.Settings)
 }
 
-private val destinations = listOf(Dest.Home, Dest.Library, Dest.Settings)
+private val destinations = listOf(Dest.Home, Dest.Settings)
 
 @Composable
 fun HighligherAppRoot() {
@@ -100,7 +96,6 @@ fun HighligherAppRoot() {
                 modifier = Modifier.padding(padding)
             ) {
                 composable(Dest.Home.route) { HomeScreen() }
-                composable(Dest.Library.route) { LibraryScreen() }
                 composable(Dest.Settings.route) { SettingsScreen() }
             }
         }

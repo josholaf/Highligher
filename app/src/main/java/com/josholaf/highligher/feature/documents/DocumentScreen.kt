@@ -2,8 +2,10 @@ package com.josholaf.highligher.feature.documents
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -145,7 +148,7 @@ fun DocumentScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(state.document?.title ?: "Note", style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                        Text(if (editing) "Editing mode" else (state.document?.title ?: "Note"), style = MaterialTheme.typography.titleMedium, maxLines = 1)
                         val status = when {
                             state.saving || state.dirty -> "Saving changes…"
                             !state.loading -> "Saved on this device"
@@ -206,13 +209,25 @@ fun DocumentScreen(
     ) { padding ->
         if (editing) {
             key(documentId) {
-                MarkdownEditor(
-                    value = state.rawText,
-                    onValueChange = viewModel::updateRaw,
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    placeholder = "Start writing…\n\nCaptured text is added to this note.",
-                    fillMaxHeight = true
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(padding)
+                ) {
+                    // Note title shown as Heading 1 above the editor, like the design.
+                    Text(
+                        state.document?.title ?: "Untitled",
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                    MarkdownEditor(
+                        value = state.rawText,
+                        onValueChange = viewModel::updateRaw,
+                        modifier = Modifier.fillMaxSize(),
+                        placeholder = "Start writing…\n\nCaptured text is added to this note.",
+                        fillMaxHeight = true
+                    )
+                }
             }
         } else {
             Column(
