@@ -97,10 +97,13 @@ jobs:
           tag_name: ${{ steps.prep.outputs.tag }}
           name: Highligher ${{ steps.prep.outputs.tag }}
           body: |
-            Highligher Android release.
+            Highligher v1.0.3 (signed release).
 
-            - Signed release APK for direct installation.
-            - Offline-first Markdown highlight capture and organisation.
+            - Signed release APK for direct installation, replacing the v1.0.2 debug APK.
+            - Home page with folder tree, quick untitled note creation, folder rename and Lucide icon picker.
+            - Full-library search across folders, notes and note content.
+            - Two-tab shell with a note editor that uses a Heading 1 title and a typography-matched placeholder.
+            - Segmented light/system/dark theme setting.
             - Minimum Android version: Android 8.0 (API 26).
 
             Download **Highligher-${{ steps.prep.outputs.tag }}.apk** below.
