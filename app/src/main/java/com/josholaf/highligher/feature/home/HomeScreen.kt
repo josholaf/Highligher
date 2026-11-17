@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,35 +27,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -84,7 +63,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,6 +71,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.josholaf.highligher.core.datastore.CapturePreferences
+import com.josholaf.highligher.core.icons.IconPickerDialog
+import com.josholaf.highligher.core.icons.rememberFolderIcon
 import com.josholaf.highligher.data.repository.FolderHit
 import com.josholaf.highligher.data.repository.HighlightRepository
 import com.josholaf.highligher.data.repository.LibrarySearch
@@ -189,34 +169,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { repository.ensureDefaultLibrary() }
     }
 }
-
-val folderIconChoices: List<Pair<String, ImageVector>> = listOf(
-    "Folder" to Icons.Default.Folder,
-    "Work" to Icons.Default.Work,
-    "School" to Icons.Default.School,
-    "Book" to Icons.Default.Book,
-    "Article" to Icons.Default.Article,
-    "Home" to Icons.Default.Home,
-    "Star" to Icons.Default.Star,
-    "Favorite" to Icons.Default.Favorite,
-    "Code" to Icons.Default.Code,
-    "Science" to Icons.Default.Science,
-    "Brush" to Icons.Default.Brush,
-    "MusicNote" to Icons.Default.MusicNote,
-    "PhotoCamera" to Icons.Default.PhotoCamera,
-    "SportsEsports" to Icons.Default.SportsEsports,
-    "Restaurant" to Icons.Default.Restaurant,
-    "FitnessCenter" to Icons.Default.FitnessCenter,
-    "Flight" to Icons.Default.Flight,
-    "ShoppingCart" to Icons.Default.ShoppingCart,
-    "Pets" to Icons.Default.Pets,
-    "Event" to Icons.Default.Event,
-    "Place" to Icons.Default.Place,
-    "Edit" to Icons.Default.Edit
-)
-
-fun folderIcon(iconName: String?): ImageVector =
-    folderIconChoices.firstOrNull { it.first == iconName }?.second ?: Icons.Default.Folder
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -405,7 +357,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
     iconFolder?.let { folder ->
         IconPickerDialog(
-            currentIcon = folder.iconName,
+            currentIconName = folder.iconName,
             onDismiss = { iconFolder = null },
             onPick = { name ->
                 viewModel.setFolderIcon(folder.id, name)
@@ -439,7 +391,7 @@ private fun SearchResults(
                     modifier = Modifier.fillMaxWidth().clickable { onOpenFolder(hit.folder.id) }
                 ) {
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(folderIcon(hit.folder.iconName), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                        Icon(rememberFolderIcon(hit.folder.iconName), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                         Spacer(Modifier.width(12.dp))
                         Text(hit.folder.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(hit.noteCount.toString() + " notes", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -531,7 +483,7 @@ private fun FolderTreeRow(
         )
         Spacer(Modifier.width(6.dp))
         Icon(
-            if (expanded) Icons.Default.FolderOpen else folderIcon(folder.iconName),
+            if (expanded) Icons.Default.FolderOpen else rememberFolderIcon(folder.iconName),
             null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(22.dp)
@@ -621,44 +573,6 @@ private fun NoteTreeRow(
             DropdownMenuItem(text = { Text("Delete") }, onClick = { menu = false; onDelete() })
         }
     }
-}
-
-@Composable
-private fun IconPickerDialog(
-    currentIcon: String?,
-    onDismiss: () -> Unit,
-    onPick: (String?) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit icon") },
-        text = {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier.fillMaxWidth().height(280.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(folderIconChoices.size) { index ->
-                    val (name, icon) = folderIconChoices[index]
-                    IconButton(
-                        onClick = { onPick(name) },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            icon,
-                            contentDescription = name,
-                            tint = if (currentIcon == name) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onPick(null) }) { Text("Default") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
 }
 
 @Composable

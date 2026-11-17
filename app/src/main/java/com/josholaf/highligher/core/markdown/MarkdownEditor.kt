@@ -48,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,8 +69,8 @@ fun MarkdownEditor(
     var fieldValue by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     if (value != fieldValue.text) fieldValue = fieldValue.copy(text = value)
 
-    val undoStack = remember { mutableStateListOf<String>() }
-    val redoStack = remember { mutableStateListOf<String>() }
+    val undoStack = remember { mutableStateListOf<TextFieldValue>() }
+    val redoStack = remember { mutableStateListOf<TextFieldValue>() }
     var previewOnly by remember { mutableStateOf(false) }
 
     val palette = livePreviewPalette()
@@ -80,7 +79,7 @@ fun MarkdownEditor(
         buildLivePreview(fieldValue.text, activeLine, palette)
     }
 
-    fun pushUndo(before: String) {
+    fun pushUndo(before: TextFieldValue) {
         if (undoStack.lastOrNull() != before) {
             undoStack.add(before)
             if (undoStack.size > 50) undoStack.removeAt(0)
@@ -89,7 +88,7 @@ fun MarkdownEditor(
     }
 
     fun applyChange(newText: String, newSelection: TextRange) {
-        pushUndo(fieldValue.text)
+        pushUndo(fieldValue)
         fieldValue = TextFieldValue(newText, newSelection)
         onValueChange(newText)
     }
@@ -135,7 +134,7 @@ fun MarkdownEditor(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 64.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 76.dp)
             ) {
                 MarkdownPreview(fieldValue.text)
             }
@@ -144,7 +143,7 @@ fun MarkdownEditor(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 64.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 76.dp)
             ) {
                 if (fieldValue.text.isEmpty()) {
                     Text(
@@ -159,15 +158,14 @@ fun MarkdownEditor(
                 BasicTextField(
                     value = fieldValue,
                     onValueChange = { next ->
-                        if (next.text != fieldValue.text) pushUndo(fieldValue.text)
+                        if (next.text != fieldValue.text) pushUndo(fieldValue)
                         fieldValue = next
                         onValueChange(next.text)
                     },
                     modifier = if (fillMaxHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
                     textStyle = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 15.sp,
-                        lineHeight = 22.sp,
+                        fontSize = 16.sp,
+                        lineHeight = 24.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     ),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -188,7 +186,7 @@ fun MarkdownEditor(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ToolbarIcon(
@@ -198,15 +196,15 @@ fun MarkdownEditor(
                     VerticalBar()
                     ToolbarIcon(Icons.Default.Undo, "Undo", enabled = !previewOnly && undoStack.isNotEmpty()) {
                         val prev = undoStack.removeLastOrNull() ?: return@ToolbarIcon
-                        redoStack.add(fieldValue.text)
-                        fieldValue = TextFieldValue(prev, TextRange(prev.length))
-                        onValueChange(prev)
+                        redoStack.add(fieldValue)
+                        fieldValue = prev
+                        onValueChange(prev.text)
                     }
                     ToolbarIcon(Icons.Default.Redo, "Redo", enabled = !previewOnly && redoStack.isNotEmpty()) {
                         val next = redoStack.removeLastOrNull() ?: return@ToolbarIcon
-                        undoStack.add(fieldValue.text)
-                        fieldValue = TextFieldValue(next, TextRange(next.length))
-                        onValueChange(next)
+                        undoStack.add(fieldValue)
+                        fieldValue = next
+                        onValueChange(next.text)
                     }
                     VerticalBar()
                     ToolbarIcon(Icons.Default.Title, "Heading", enabled = !previewOnly) { insertLinePrefix("## ") }

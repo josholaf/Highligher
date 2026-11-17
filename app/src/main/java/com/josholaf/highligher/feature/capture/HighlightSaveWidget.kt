@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -46,6 +45,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.josholaf.highligher.core.icons.rememberFolderIcon
 import com.josholaf.highligher.domain.model.Document
 import com.josholaf.highligher.domain.model.Folder
 
@@ -133,7 +133,7 @@ fun HighlightSaveWidget(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
                 ) {
-                    Icon(Icons.Default.Folder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Icon(rememberFolderIcon(selectedFolder?.iconName), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
                     Text(
                         selectedFolder?.name ?: "Folder",
@@ -163,7 +163,7 @@ fun HighlightSaveWidget(
                         value = selectedFolder?.name ?: "Choose folder",
                         onValueChange = {},
                         readOnly = true,
-                        leadingIcon = { Icon(Icons.Default.Folder, null) },
+                        leadingIcon = { Icon(rememberFolderIcon(selectedFolder?.iconName), null) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(folderExpanded) },
                         modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         singleLine = true
@@ -173,7 +173,7 @@ fun HighlightSaveWidget(
                             DropdownMenuItem(
                                 text = { Text(folder.name) },
                                 onClick = { onSelectFolder(folder.id); folderExpanded = false },
-                                leadingIcon = { Icon(Icons.Default.Folder, null) }
+                                leadingIcon = { Icon(rememberFolderIcon(folder.iconName), null) }
                             )
                         }
                         DropdownMenuItem(
