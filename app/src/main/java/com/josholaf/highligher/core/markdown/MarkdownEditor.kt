@@ -149,8 +149,8 @@ fun MarkdownEditor(
                     Text(
                         placeholder,
                         style = TextStyle(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
+                            lineHeight = 24.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
                         )
                     )
