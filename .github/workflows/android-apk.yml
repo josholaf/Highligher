@@ -19,7 +19,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -102,3 +102,22 @@ jobs:
           path: ${{ steps.build_apk.outputs.apk_path }}
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish APK to public release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.2
+          name: Highligher v1.0.2
+          body: |
+            First public release of Highligher.
+
+            - Offline-first Markdown notes with folder tree and full-library search.
+            - Capture highlights from any app via text selection.
+            - Live markdown preview, in-note highlighting (==text==), light/system/dark theme.
+            - Minimum Android version: Android 8.0 (API 26).
+
+            Download **Highligher-v1.0.2-debug.apk** below and install it. Android may ask you to allow installs from this source.
+          draft: false
+          prerelease: false
+          files: ${{ steps.build_apk.outputs.apk_path }}
