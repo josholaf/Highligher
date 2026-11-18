@@ -48,11 +48,19 @@ fun CaptureScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
+    val folderName = state.folders.firstOrNull { it.id == state.selectedFolderId }?.name
+    val noteTitle = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title
+
     LaunchedEffect(state.saved) {
         if (state.saved) {
-            val folder = state.folders.firstOrNull { it.id == state.selectedFolderId }?.name ?: ""
-            val note = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title ?: ""
-            HighlightWidgetUpdater.update(context, state.selectedText, folder, note)
+            HighlightWidgetUpdater.update(
+                context,
+                state.selectedText,
+                folderName ?: "",
+                noteTitle ?: ""
+            )
+            // Brief confirmation, then close
+            kotlinx.coroutines.delay(1100)
             onSaved()
         }
     }
@@ -74,6 +82,42 @@ fun CaptureScreen(
                     .widthIn(max = 560.dp)
                     .fillMaxHeight(0.9f)
             ) {
+                if (state.saved) {
+                    // Success confirmation (Material 3 style popup content)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        ) {
+                            Text(
+                                "✓",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                            )
+                        }
+                        Text(
+                            "Saved",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (folderName != null && noteTitle != null)
+                                "Added to $folderName / $noteTitle"
+                            else
+                                "Highlight saved on this device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -86,7 +130,7 @@ fun CaptureScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Capture highlight",
+                            "Save selection",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             modifier = Modifier.weight(1f)
                         )
@@ -148,11 +192,12 @@ fun CaptureScreen(
                             val note = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title
                             Text(
                                 if (folder != null && note != null) "Save to $folder / $note"
-                                else "Save highlight"
+                                else "Save"
                             )
                         }
                     }
                 }
+                } // end else (not saved)
             }
         }
     }
