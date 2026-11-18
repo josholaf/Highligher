@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
-    data object Home : Dest("home", "Home", Icons.Default.Home)
+    data object Home : Dest("home", "Library", Icons.Default.Home)
     data object Settings : Dest("settings", "Settings", Icons.Default.Settings)
 }
 
@@ -70,7 +71,10 @@ fun HighligherAppRoot() {
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
                 if (bottomBarVisible.value) {
-                    NavigationBar {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ) {
                         destinations.forEach { dest ->
                             NavigationBarItem(
                                 selected = currentRoute == dest.route,
