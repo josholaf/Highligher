@@ -48,11 +48,18 @@ fun CaptureScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
+    val folderName = state.folders.firstOrNull { it.id == state.selectedFolderId }?.name
+    val noteTitle = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title
+
     LaunchedEffect(state.saved) {
         if (state.saved) {
-            val folder = state.folders.firstOrNull { it.id == state.selectedFolderId }?.name ?: ""
-            val note = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title ?: ""
-            HighlightWidgetUpdater.update(context, state.selectedText, folder, note)
+            HighlightWidgetUpdater.update(
+                context,
+                state.selectedText,
+                folderName ?: "",
+                noteTitle ?: ""
+            )
+            kotlinx.coroutines.delay(1100)
             onSaved()
         }
     }
@@ -66,7 +73,7 @@ fun CaptureScreen(
             contentAlignment = Alignment.Center
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 6.dp,
                 modifier = Modifier
@@ -74,6 +81,41 @@ fun CaptureScreen(
                     .widthIn(max = 560.dp)
                     .fillMaxHeight(0.9f)
             ) {
+                if (state.saved) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            shape = MaterialTheme.shapes.extraLarge,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                "\u2713",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 22.dp, vertical = 14.dp)
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            "Saved",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (folderName != null && noteTitle != null)
+                                "Added to $folderName / $noteTitle"
+                            else
+                                "Saved on this device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -86,7 +128,7 @@ fun CaptureScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Capture highlight",
+                            "Save selection",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             modifier = Modifier.weight(1f)
                         )
@@ -111,7 +153,7 @@ fun CaptureScreen(
                         value = state.note,
                         onValueChange = viewModel::updateNote,
                         label = { Text("Personal note") },
-                        placeholder = { Text("Add a personal note…") },
+                        placeholder = { Text("Add a personal note\u2026") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 4
@@ -121,7 +163,7 @@ fun CaptureScreen(
                         value = state.sourceUrl,
                         onValueChange = viewModel::updateSource,
                         label = { Text("Source (optional)") },
-                        placeholder = { Text("https://…") },
+                        placeholder = { Text("https://\u2026") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -148,10 +190,11 @@ fun CaptureScreen(
                             val note = state.documents.firstOrNull { it.id == state.selectedDocumentId }?.title
                             Text(
                                 if (folder != null && note != null) "Save to $folder / $note"
-                                else "Save highlight"
+                                else "Save"
                             )
                         }
                     }
+                }
                 }
             }
         }
