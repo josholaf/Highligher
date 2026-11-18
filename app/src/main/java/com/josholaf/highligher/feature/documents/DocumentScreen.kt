@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -146,15 +147,29 @@ fun DocumentScreen(
         modifier = Modifier.imePadding(),
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
                 title = {
                     Column {
-                        Text(if (editing) "Editing mode" else (state.document?.title ?: "Note"), style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                        Text(
+                            if (editing) "Editing" else (state.document?.title ?: "Note"),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            maxLines = 1
+                        )
                         val status = when {
-                            state.saving || state.dirty -> "Saving changes…"
+                            state.saving || state.dirty -> "Saving…"
                             !state.loading -> "Saved on this device"
-                            else -> "Opening note…"
+                            else -> "Opening…"
                         }
-                        Text(status, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            status,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 },
                 navigationIcon = {
@@ -238,9 +253,14 @@ fun DocumentScreen(
                     .padding(horizontal = 22.dp, vertical = 20.dp)
             ) {
                 if (state.rawText.isBlank() && !state.loading) {
-                    Text("This note is empty.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(48.dp))
                     Text(
-                        "Tap Edit to start writing, or capture selected text from another app.",
+                        "Empty note",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Tap Edit to start writing, or select text in another app and save it here.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp)
