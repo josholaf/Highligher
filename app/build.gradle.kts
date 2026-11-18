@@ -6,8 +6,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
-val appVersionName = providers.gradleProperty("appVersionName").orElse("1.0.3").get()
-val appVersionCode = providers.gradleProperty("appVersionCode").orElse("5").get().toInt()
+val appVersionName = providers.gradleProperty("appVersionName").orElse("1.1.0").get()
+val appVersionCode = providers.gradleProperty("appVersionCode").orElse("6").get().toInt()
 
 android {
     namespace = "com.josholaf.highligher"
@@ -23,8 +23,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Release signing is configured only when CI (or a local developer) provides a keystore.
-    // Never commit the keystore or passwords to the repository.
     val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
     if (!releaseKeystorePath.isNullOrBlank()) {
         signingConfigs {
