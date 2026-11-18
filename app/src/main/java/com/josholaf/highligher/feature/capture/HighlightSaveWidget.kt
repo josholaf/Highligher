@@ -31,6 +31,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -155,6 +157,62 @@ fun HighlightSaveWidget(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                // Quick suggestions for where to put the saved selection
+                Text(
+                    "Suggestions",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AssistChip(
+                        onClick = {
+                            nameDraft = ""
+                            showNewNote = true
+                        },
+                        label = { Text("New note") },
+                        leadingIcon = {
+                            Icon(Icons.Default.NoteAdd, null, modifier = Modifier.size(16.dp))
+                        },
+                        enabled = selectedFolderId != null,
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    )
+                    AssistChip(
+                        onClick = {
+                            nameDraft = ""
+                            showNewFolder = true
+                        },
+                        label = { Text("New folder") },
+                        leadingIcon = {
+                            Icon(Icons.Default.CreateNewFolder, null, modifier = Modifier.size(16.dp))
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    if (selectedDoc != null) {
+                        AssistChip(
+                            onClick = { /* already selected – visual confirmation */ },
+                            label = { Text("Current note") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Description, null, modifier = Modifier.size(16.dp))
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
 
                 Text("Folder", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(4.dp))
