@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="deep_forest">#FF17231D</color>
-    <color name="highlight_green">#FF78B68A</color>
-    <color name="paper">#FFF3F1E9</color>
-    <color name="warm_accent">#FFC6A66A</color>
-    <color name="on_paper">#FF1A1A1A</color>
-    <color name="muted">#FF6B6B6B</color>
+    <color name="deep_forest">#FF0F1A15</color>
+    <color name="highlight_green">#FF5FA876</color>
+    <color name="paper">#FFF7F4EC</color>
+    <color name="warm_accent">#FFC4A574</color>
+    <color name="on_paper">#FF1C1B19</color>
+    <color name="muted">#FF6B6B66</color>
 </resources>

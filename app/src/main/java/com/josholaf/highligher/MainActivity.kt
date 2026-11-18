@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -11,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -52,7 +57,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
-    data object Home : Dest("home", "Home", Icons.Default.Home)
+    data object Home : Dest("home", "Library", Icons.Default.Home)
     data object Settings : Dest("settings", "Settings", Icons.Default.Settings)
 }
 
@@ -70,7 +75,10 @@ fun HighligherAppRoot() {
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
                 if (bottomBarVisible.value) {
-                    NavigationBar {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ) {
                         destinations.forEach { dest ->
                             NavigationBarItem(
                                 selected = currentRoute == dest.route,
@@ -94,7 +102,35 @@ fun HighligherAppRoot() {
             NavHost(
                 navController = navController,
                 startDestination = Dest.Home.route,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.padding(padding),
+                enterTransition = {
+                    fadeIn(animationSpec = tween(220)) +
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(280)
+                        )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(180)) +
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(240)
+                        )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(220)) +
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(280)
+                        )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(180)) +
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(240)
+                        )
+                }
             ) {
                 composable(Dest.Home.route) { HomeScreen() }
                 composable(Dest.Settings.route) { SettingsScreen() }
