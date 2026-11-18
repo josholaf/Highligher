@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -98,7 +102,35 @@ fun HighligherAppRoot() {
             NavHost(
                 navController = navController,
                 startDestination = Dest.Home.route,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.padding(padding),
+                enterTransition = {
+                    fadeIn(animationSpec = tween(220)) +
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(280)
+                        )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(180)) +
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(240)
+                        )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(220)) +
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(280)
+                        )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(180)) +
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(240)
+                        )
+                }
             ) {
                 composable(Dest.Home.route) { HomeScreen() }
                 composable(Dest.Settings.route) { SettingsScreen() }
