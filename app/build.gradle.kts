@@ -23,27 +23,34 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Only create a release signing config when all required env vars are present.
+    // This keeps unit tests and debug/CI builds green when signing secrets are absent.
     val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
-    if (!releaseKeystorePath.isNullOrBlank()) {
+    val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+    val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+    val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+    val hasReleaseSigning =
+        !releaseKeystorePath.isNullOrBlank() &&
+            !storePassword.isNullOrBlank() &&
+            !keyAlias.isNullOrBlank() &&
+            !keyPassword.isNullOrBlank()
+
+    if (hasReleaseSigning) {
         signingConfigs {
             create("release") {
-                storeFile = file(releaseKeystorePath)
-                storePassword = requireNotNull(System.getenv("ANDROID_KEYSTORE_PASSWORD")) {
-                    "ANDROID_KEYSTORE_PASSWORD is required for a signed release build"
-                }
-                keyAlias = requireNotNull(System.getenv("ANDROID_KEY_ALIAS")) {
-                    "ANDROID_KEY_ALIAS is required for a signed release build"
-                }
-                keyPassword = requireNotNull(System.getenv("ANDROID_KEY_PASSWORD")) {
-                    "ANDROID_KEY_PASSWORD is required for a signed release build"
-                }
+                storeFile = file(releaseKeystorePath!!)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.findByName("release")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
