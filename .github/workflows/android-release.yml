@@ -36,6 +36,7 @@ jobs:
         with:
           gradle-version: "8.9"
       - name: Check Android signing secrets
+        id: secrets
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -44,13 +45,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          missing=0
           for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
             if [[ -z "${!secret_name}" ]]; then
-              echo "::error::Missing GitHub Actions secret: ${secret_name}"
-              exit 1
+              echo "::warning::Missing GitHub Actions secret: ${secret_name}"
+              missing=1
             fi
           done
+          if [[ $missing -eq 1 ]]; then
+            echo "has_secrets=false" >> "$GITHUB_OUTPUT"
+            echo "Signing secrets not configured. Skipping signed build."
+          else
+            echo "has_secrets=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Decode Android signing keystore
+        if: steps.secrets.outputs.has_secrets == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         shell: bash
@@ -61,12 +70,14 @@ jobs:
       - name: Run unit tests
         run: gradle testDebugUnitTest --no-daemon
       - name: Build signed release APK
+        if: steps.secrets.outputs.has_secrets == 'true'
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle assembleRelease --no-daemon
       - name: Verify APK signature and prepare release asset
+        if: steps.secrets.outputs.has_secrets == 'true'
         id: prep
         shell: bash
         run: |
@@ -83,15 +94,17 @@ jobs:
           cp "$APK" "Highligher-$TAG.apk"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - name: Remove decoded keystore
-        if: always()
+        if: always() && steps.secrets.outputs.has_secrets == 'true'
         run: rm -f "app/$ANDROID_KEYSTORE_FILE"
       - name: Upload release APK artifact
+        if: steps.secrets.outputs.has_secrets == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: highligher-signed-release-apk
           path: Highligher-*.apk
           if-no-files-found: error
       - name: Publish APK to GitHub Release
+        if: steps.secrets.outputs.has_secrets == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.prep.outputs.tag }}
@@ -110,3 +123,8 @@ jobs:
           draft: false
           prerelease: false
           files: Highligher-*.apk
+      - name: Secrets missing notice
+        if: steps.secrets.outputs.has_secrets != 'true'
+        run: |
+          echo "::notice::Signed release skipped because Android signing secrets are not set."
+          echo "Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD to repository secrets to enable signing."
